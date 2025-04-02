@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getProperties, deleteProperty } from '@/services/propertyService';
@@ -15,6 +14,53 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+
+const dummyProperties = [
+  {
+    _id: 'prop1',
+    title: 'Modern Apartment in City Center',
+    type: 'flat',
+    status: 'rent',
+    price: 25000,
+    location: { city: 'Mumbai' },
+    createdAt: new Date().toISOString(),
+    views: 145,
+    images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267']
+  },
+  {
+    _id: 'prop2',
+    title: 'Luxury Villa with Garden',
+    type: 'villa',
+    status: 'sale',
+    price: 9500000,
+    location: { city: 'Bangalore' },
+    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    views: 324,
+    images: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914']
+  },
+  {
+    _id: 'prop3',
+    title: 'Commercial Space in Tech Park',
+    type: 'commercial',
+    status: 'rent',
+    price: 150000,
+    location: { city: 'Hyderabad' },
+    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    views: 78,
+    images: []
+  },
+  {
+    _id: 'prop4',
+    title: '3BHK Independent House',
+    type: 'house',
+    status: 'sale',
+    price: 4500000,
+    location: { city: 'Delhi' },
+    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    views: 256,
+    images: ['https://images.unsplash.com/photo-1568605114967-8130f3a36994']
+  }
+];
 
 const PropertiesManagementTab = () => {
   const queryClient = useQueryClient();
@@ -87,6 +133,10 @@ const PropertiesManagementTab = () => {
     }
   };
 
+  const properties = (error || !data?.data || data.data.length === 0) 
+    ? dummyProperties 
+    : data.data;
+
   if (isLoading) {
     return <div className="p-4">Loading properties...</div>;
   }
@@ -94,8 +144,6 @@ const PropertiesManagementTab = () => {
   if (error) {
     return <div className="p-4 text-red-500">Error loading properties</div>;
   }
-
-  const properties = data?.data || [];
 
   return (
     <Card>

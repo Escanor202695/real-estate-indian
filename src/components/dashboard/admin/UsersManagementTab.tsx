@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getUsers, getUser, updateUser, deleteUser } from '@/services/adminService';
@@ -15,6 +14,63 @@ import { Trash2, Edit, Search, UserPlus, User, UserCheck, UserX } from 'lucide-r
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+
+const dummyUsers = [
+  {
+    _id: 'user1',
+    name: 'Rahul Sharma',
+    email: 'rahul.sharma@example.com',
+    role: 'admin',
+    isActive: true,
+    phone: '+91 9876543210',
+    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    _id: 'user2',
+    name: 'Priya Patel',
+    email: 'priya.patel@example.com',
+    role: 'user',
+    isActive: true,
+    phone: '+91 9876543211',
+    createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    _id: 'user3',
+    name: 'Amit Kumar',
+    email: 'amit.kumar@example.com',
+    role: 'user',
+    isActive: false,
+    phone: null,
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  {
+    _id: 'user4',
+    name: 'Anjali Singh',
+    email: 'anjali.singh@example.com',
+    role: 'user',
+    isActive: true,
+    phone: '+91 9876543212',
+    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+  }
+];
+
+const dummyUserDetails = {
+  user: {
+    _id: 'user1',
+    name: 'Rahul Sharma',
+    email: 'rahul.sharma@example.com',
+    role: 'admin',
+    isActive: true,
+    phone: '+91 9876543210',
+    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+  },
+  preferences: {
+    savedSearches: [
+      { id: 'search1', name: 'Apartments in Mumbai' },
+      { id: 'search2', name: 'Villas in Bangalore' }
+    ]
+  }
+};
 
 const UsersManagementTab = () => {
   const queryClient = useQueryClient();
@@ -93,34 +149,40 @@ const UsersManagementTab = () => {
     setSelectedUser(id);
   };
 
-  if (isLoading) {
-    return <div className="p-4">Loading users...</div>;
-  }
+  const users = (error || !data?.data || data.data.length === 0) 
+    ? dummyUsers 
+    : data.data;
 
-  if (error) {
-    return <div className="p-4 text-red-500">Error loading users</div>;
-  }
-
-  let users = data?.data || [];
-
-  // Client-side filtering
+  let filteredUsers = users;
   if (searchQuery) {
     const query = searchQuery.toLowerCase();
-    users = users.filter((user: any) => 
+    filteredUsers = filteredUsers.filter((user: any) => 
       user.name.toLowerCase().includes(query) || 
       user.email.toLowerCase().includes(query)
     );
   }
 
   if (roleFilter !== 'all') {
-    users = users.filter((user: any) => user.role === roleFilter);
+    filteredUsers = filteredUsers.filter((user: any) => user.role === roleFilter);
   }
 
   if (statusFilter !== 'all') {
-    users = users.filter((user: any) => {
+    filteredUsers = filteredUsers.filter((user: any) => {
       if (statusFilter === 'active') return user.isActive;
       return !user.isActive;
     });
+  }
+
+  const userDetails = (!selectedUserData || error) 
+    ? { data: dummyUserDetails } 
+    : selectedUserData;
+
+  if (isLoading) {
+    return <div className="p-4">Loading users...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-500">Error loading users</div>;
   }
 
   return (
@@ -171,7 +233,7 @@ const UsersManagementTab = () => {
           </div>
         </div>
         
-        {users.length === 0 ? (
+        {filteredUsers.length === 0 ? (
           <div className="text-center py-8">
             <User className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-lg font-medium text-gray-900">No users found</h3>
@@ -193,7 +255,7 @@ const UsersManagementTab = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user: any) => (
+                {filteredUsers.map((user: any) => (
                   <TableRow key={user._id}>
                     <TableCell className="font-medium">
                       <div className="flex items-center">
@@ -242,28 +304,28 @@ const UsersManagementTab = () => {
                             </DialogHeader>
                             {isLoadingUser ? (
                               <div className="py-6 text-center">Loading user details...</div>
-                            ) : selectedUserData ? (
+                            ) : userDetails.data ? (
                               <div className="py-4">
                                 <div className="flex justify-center mb-6">
                                   <div className="h-20 w-20 bg-clickprop-blue rounded-full flex items-center justify-center text-white text-2xl">
-                                    {selectedUserData.data.user.name.charAt(0).toUpperCase()}
+                                    {userDetails.data.user.name.charAt(0).toUpperCase()}
                                   </div>
                                 </div>
                                 
                                 <div className="space-y-4">
                                   <div>
                                     <Label className="text-xs text-gray-500">Name</Label>
-                                    <div className="font-medium">{selectedUserData.data.user.name}</div>
+                                    <div className="font-medium">{userDetails.data.user.name}</div>
                                   </div>
                                   
                                   <div>
                                     <Label className="text-xs text-gray-500">Email</Label>
-                                    <div className="font-medium">{selectedUserData.data.user.email}</div>
+                                    <div className="font-medium">{userDetails.data.user.email}</div>
                                   </div>
                                   
                                   <div>
                                     <Label className="text-xs text-gray-500">Phone</Label>
-                                    <div className="font-medium">{selectedUserData.data.user.phone || '-'}</div>
+                                    <div className="font-medium">{userDetails.data.user.phone || '-'}</div>
                                   </div>
                                   
                                   <div>
@@ -271,12 +333,12 @@ const UsersManagementTab = () => {
                                     <div>
                                       <Badge 
                                         variant="outline" 
-                                        className={selectedUserData.data.user.role === 'admin' 
+                                        className={userDetails.data.user.role === 'admin' 
                                           ? 'bg-purple-50 text-purple-700 border-purple-200' 
                                           : 'bg-blue-50 text-blue-700 border-blue-200'
                                         }
                                       >
-                                        {selectedUserData.data.user.role === 'admin' ? 'Administrator' : 'User'}
+                                        {userDetails.data.user.role === 'admin' ? 'Administrator' : 'User'}
                                       </Badge>
                                     </div>
                                   </div>
@@ -284,23 +346,23 @@ const UsersManagementTab = () => {
                                   <div>
                                     <Label className="text-xs text-gray-500">Status</Label>
                                     <div className="flex items-center">
-                                      <div className={`h-2 w-2 rounded-full mr-2 ${selectedUserData.data.user.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
-                                      <span>{selectedUserData.data.user.isActive ? 'Active' : 'Inactive'}</span>
+                                      <div className={`h-2 w-2 rounded-full mr-2 ${userDetails.data.user.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
+                                      <span>{userDetails.data.user.isActive ? 'Active' : 'Inactive'}</span>
                                     </div>
                                   </div>
                                   
                                   <div>
                                     <Label className="text-xs text-gray-500">Joined</Label>
                                     <div className="font-medium">
-                                      {new Date(selectedUserData.data.user.createdAt).toLocaleDateString()}
+                                      {new Date(userDetails.data.user.createdAt).toLocaleDateString()}
                                     </div>
                                   </div>
                                   
-                                  {selectedUserData.data.preferences && (
+                                  {userDetails.data.preferences && (
                                     <div>
                                       <Label className="text-xs text-gray-500">Saved Searches</Label>
                                       <div className="font-medium">
-                                        {selectedUserData.data.preferences.savedSearches.length}
+                                        {userDetails.data.preferences.savedSearches.length}
                                       </div>
                                     </div>
                                   )}
