@@ -1,73 +1,161 @@
-# Welcome to your Lovable project
 
-## Project info
+# ClickProp - Real Estate Platform
 
-**URL**: https://lovable.dev/projects/94939844-c7b6-4856-8be2-a0b502f1690f
+ClickProp is a comprehensive real estate platform built using the MERN stack (MongoDB, Express, React, Node.js). This application allows users to browse properties, search by cities, save favorite properties, and more. Admin users can manage properties, cities, and users.
 
-## How can I edit this code?
+## Table of Contents
 
-There are several ways of editing your application.
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Environment Variables](#environment-variables)
+- [Running the Application](#running-the-application)
+- [Features](#features)
+- [Authentication](#authentication)
+- [Remaining Work](#remaining-work)
+- [Project Structure](#project-structure)
 
-**Use Lovable**
+## Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/94939844-c7b6-4856-8be2-a0b502f1690f) and start prompting.
+- Node.js (v14 or higher)
+- MongoDB (local or Atlas connection)
+- Google OAuth credentials (for social authentication)
 
-Changes made via Lovable will be committed automatically to this repo.
+## Installation
 
-**Use your preferred IDE**
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd clickprop
+   ```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. Install frontend dependencies:
+   ```bash
+   npm install
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+3. Install backend dependencies:
+   ```bash
+   cd server
+   npm install
+   cd ..
+   ```
 
-Follow these steps:
+## Environment Variables
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Create a `.env` file in the root directory with the following variables:
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```
+PORT=5000
+MONGO_URI=mongodb://localhost:27017/clickprop
+JWT_SECRET=your_strong_secret_key_here
+NODE_ENV=development
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+BACKEND_URL=http://localhost:5000
+FRONTEND_URL=http://localhost:3000
 ```
 
-**Edit a file directly in GitHub**
+### Important Notes about Environment Variables:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. **MONGO_URI**: Connection string to your MongoDB database. You can use a local MongoDB instance or set up a cloud MongoDB using MongoDB Atlas.
 
-**Use GitHub Codespaces**
+2. **JWT_SECRET**: A strong secret key for JWT token generation. Should be a random string.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+3. **GOOGLE_CLIENT_ID** and **GOOGLE_CLIENT_SECRET**: 
+   - Get these by creating a project in the [Google Developer Console](https://console.developers.google.com/)
+   - Create OAuth credentials with the following settings:
+     - Application type: Web application
+     - Authorized JavaScript origins: `http://localhost:5000`
+     - Authorized redirect URIs: `http://localhost:5000/api/auth/google/callback`
 
-## What technologies are used for this project?
+4. **BACKEND_URL** and **FRONTEND_URL**: URLs for your backend and frontend services.
 
-This project is built with:
+## Running the Application
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. Start the backend server:
+   ```bash
+   cd server
+   npm run dev
+   ```
 
-## How can I deploy this project?
+2. Start the frontend development server (in a new terminal):
+   ```bash
+   npm run dev
+   ```
 
-Simply open [Lovable](https://lovable.dev/projects/94939844-c7b6-4856-8be2-a0b502f1690f) and click on Share -> Publish.
+3. Access the application:
+   - Frontend: [http://localhost:3000](http://localhost:3000)
+   - Backend API: [http://localhost:5000](http://localhost:5000)
 
-## Can I connect a custom domain to my Lovable project?
+## Features
 
-Yes it is!
+- User authentication (email/password and Google OAuth)
+- Property listings with search and filter functionality
+- City-based property browsing
+- User dashboard with profile management
+- Saved searches and property alerts
+- Admin dashboard for managing properties, users, and cities
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Authentication
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+The application supports two authentication methods:
+1. **Email/Password**: Traditional signup and login
+2. **Google OAuth**: Sign in with Google account
+
+## Remaining Work
+
+To complete the project, the following tasks need to be addressed:
+
+1. **Google OAuth Configuration**:
+   - Add valid `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in the `.env` file
+   - Ensure redirect URIs are correctly set up in Google Developer Console
+
+2. **Authentication Middleware Implementation**:
+   - Implement mandatory authentication for user and admin routes
+   - Apply the existing middleware to all protected routes
+   - Update frontend to handle unauthorized access
+
+3. **Replace Dummy Data**:
+   - Remove hardcoded dummy data from components:
+     - `LatestProperties.tsx`
+     - `FeaturedProperties.tsx`
+     - `PopularCities.tsx`
+     - `CitiesManagementTab.tsx`
+   - Uncomment the API calls in these components to fetch real data
+
+4. **Backend Connection**:
+   - Ensure proper connection to MongoDB database
+   - Validate all API endpoints are working correctly
+
+5. **Error Handling Improvements**:
+   - Add comprehensive error handling for API requests
+   - Implement better user feedback for failed actions
+
+6. **Data Validation**:
+   - Add form validation for all user inputs
+   - Implement server-side validation for API requests
+
+7. **Testing**:
+   - Add unit and integration tests for backend and frontend
+
+## Project Structure
+
+The project follows a typical MERN stack structure:
+
+- **Frontend (React + TypeScript)**
+  - `/src`: Source files for the React application
+  - `/src/components`: Reusable UI components
+  - `/src/pages`: Top-level page components
+  - `/src/services`: API service functions
+  - `/src/types`: TypeScript type definitions
+
+- **Backend (Node.js + Express)**
+  - `/server`: Backend server code
+  - `/server/controllers`: Route controller functions
+  - `/server/models`: Mongoose models for MongoDB
+  - `/server/routes`: Express route definitions
+  - `/server/middleware`: Custom middleware functions
+
+## License
+
+[MIT License](LICENSE)
