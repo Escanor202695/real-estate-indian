@@ -191,29 +191,31 @@ const Cities = () => {
   const sortedStateEntries = Object.entries(citiesByState)
     .sort(([stateA], [stateB]) => stateA.localeCompare(stateB));
   
-  // Calculate the total number of cities
-  const totalCities = sortedStateEntries.reduce((total, [_, cities]) => total + cities.length, 0);
+  // Calculate the total count (states + cities)
+  const totalCount = sortedStateEntries.reduce(
+    (total, [_, cities]) => total + 1 + cities.length, 0
+  );
   
-  // Calculate cities per column (roughly equal distribution)
-  const citiesPerColumn = Math.ceil(totalCities / 3);
+  // Calculate items per column (roughly equal distribution)
+  const itemsPerColumn = Math.ceil(totalCount / 3);
   
-  // Create columns based on city count
+  // Create columns based on combined count of states + cities
   const columns: Array<Array<[string, City[]]>> = [[], [], []];
   let currentColumn = 0;
-  let currentColumnCityCount = 0;
+  let currentColumnCount = 0;
   
   sortedStateEntries.forEach(stateEntry => {
-    const stateCityCount = stateEntry[1].length;
+    const stateAndCitiesCount = 1 + stateEntry[1].length; // Count state itself (1) plus its cities
     
     // If adding this state would exceed the target count and we're not on the last column,
     // move to the next column
-    if (currentColumnCityCount + stateCityCount > citiesPerColumn && currentColumn < 2) {
+    if (currentColumnCount + stateAndCitiesCount > itemsPerColumn && currentColumn < 2) {
       currentColumn++;
-      currentColumnCityCount = 0;
+      currentColumnCount = 0;
     }
     
     columns[currentColumn].push(stateEntry);
-    currentColumnCityCount += stateCityCount;
+    currentColumnCount += stateAndCitiesCount;
   });
   
   return (
