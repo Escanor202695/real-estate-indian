@@ -30,8 +30,12 @@ const UserDashboard = () => {
           state: 'NY'
         }
       }
-    },
-    onError: () => {
+    }
+  });
+
+  // Handle query error
+  useEffect(() => {
+    if (error) {
       toast({
         title: "Connection Error",
         description: "Using demo data instead of live data.",
@@ -39,7 +43,7 @@ const UserDashboard = () => {
       });
       console.log("Using demo data - API connection failed");
     }
-  });
+  }, [error, toast]);
 
   // Add effect to check for new notifications
   useEffect(() => {
