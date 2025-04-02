@@ -28,6 +28,7 @@ const mockProperties: Property[] = [
     amenities: ['Swimming Pool', 'Gym', 'Security'],
     features: ['Modular Kitchen', 'Furnished'],
     images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800&auto=format&fit=crop'],
+    externalLink: "https://example.com/property/1",
     isActive: true,
     views: 342
   },
@@ -50,6 +51,7 @@ const mockProperties: Property[] = [
     amenities: ['Parking', 'Garden', 'Security'],
     features: ['Modular Kitchen', 'Furnished'],
     images: ['https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=800&auto=format&fit=crop'],
+    externalLink: "https://example.com/property/5",
     isActive: true,
     views: 210
   },
@@ -72,6 +74,7 @@ const mockProperties: Property[] = [
     amenities: ['Swimming Pool', 'Gym', 'Club House'],
     features: ['Modular Kitchen', 'Furnished', 'Balcony'],
     images: ['https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=800&auto=format&fit=crop'],
+    externalLink: "https://example.com/property/6",
     isActive: true,
     views: 178
   }
