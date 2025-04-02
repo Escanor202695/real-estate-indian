@@ -31,15 +31,13 @@ const UserDashboard = () => {
         }
       }
     },
-    onSettled: (data, error) => {
-      if (error) {
-        toast({
-          title: "Connection Error",
-          description: "Using demo data instead of live data.",
-          variant: "default"
-        });
-        console.log("Using demo data - API connection failed");
-      }
+    onError: () => {
+      toast({
+        title: "Connection Error",
+        description: "Using demo data instead of live data.",
+        variant: "default"
+      });
+      console.log("Using demo data - API connection failed");
     }
   });
 
