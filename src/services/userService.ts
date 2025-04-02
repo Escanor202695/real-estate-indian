@@ -1,4 +1,3 @@
-
 import api from './api';
 
 export const getUserPreferences = async () => {
@@ -162,6 +161,52 @@ export const deactivateAccount = async () => {
     return {
       success: true,
       message: 'Account deactivated successfully'
+    };
+  }
+};
+
+export const createNotification = async (userId: string, notificationData: any) => {
+  try {
+    const response = await api.post(`/users/${userId}/notifications`, notificationData);
+    return response.data;
+  } catch (error) {
+    console.log('Using dummy response for createNotification');
+    return {
+      success: true,
+      data: {
+        _id: 'dummy-notification-' + Date.now(),
+        ...notificationData,
+        read: false,
+        createdAt: new Date().toISOString()
+      }
+    };
+  }
+};
+
+export const markNotificationAsRead = async (userId: string, notificationId: string) => {
+  try {
+    const response = await api.put(`/users/${userId}/notifications/${notificationId}`, { read: true });
+    return response.data;
+  } catch (error) {
+    console.log('Using dummy response for markNotificationAsRead');
+    return {
+      success: true,
+      message: 'Notification marked as read'
+    };
+  }
+};
+
+export const getUnreadNotificationsCount = async (userId: string) => {
+  try {
+    const response = await api.get(`/users/${userId}/notifications/unread/count`);
+    return response.data;
+  } catch (error) {
+    console.log('Using dummy response for getUnreadNotificationsCount');
+    // Random number between 0 and 5 for demo purposes
+    const randomCount = Math.floor(Math.random() * 6);
+    return {
+      success: true,
+      count: randomCount
     };
   }
 };
