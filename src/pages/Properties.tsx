@@ -29,6 +29,7 @@ const mockProperties: Property[] = [
     amenities: ['Swimming Pool', 'Gym', 'Security'],
     features: ['Modular Kitchen', 'Furnished'],
     images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800&auto=format&fit=crop'],
+    externalLink: "https://example.com/property/1",
     isActive: true,
     views: 342
   },
@@ -51,6 +52,7 @@ const mockProperties: Property[] = [
     amenities: ['Parking', 'Security', 'Power Backup'],
     features: ['Air Conditioner', 'Furnished'],
     images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=800&auto=format&fit=crop'],
+    externalLink: "https://example.com/property/2",
     isActive: true,
     views: 256
   },
@@ -73,6 +75,7 @@ const mockProperties: Property[] = [
     amenities: ['Swimming Pool', 'Garden', 'Security'],
     features: ['Modular Kitchen', 'Furnished', 'Terrace'],
     images: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800&auto=format&fit=crop'],
+    externalLink: "https://example.com/property/3",
     isActive: true,
     views: 198
   },
@@ -95,6 +98,7 @@ const mockProperties: Property[] = [
     amenities: ['Parking', 'Security', '24/7 Access'],
     features: ['Air Conditioner', 'Power Backup'],
     images: ['https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=800&auto=format&fit=crop'],
+    externalLink: "https://example.com/property/4",
     isActive: true,
     views: 145
   },
@@ -117,6 +121,7 @@ const mockProperties: Property[] = [
     amenities: ['Parking', 'Garden', 'Security'],
     features: ['Modular Kitchen', 'Furnished'],
     images: ['https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=800&auto=format&fit=crop'],
+    externalLink: "https://example.com/property/5",
     isActive: true,
     views: 210
   },
@@ -139,6 +144,7 @@ const mockProperties: Property[] = [
     amenities: ['Swimming Pool', 'Gym', 'Club House'],
     features: ['Modular Kitchen', 'Furnished', 'Balcony'],
     images: ['https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=800&auto=format&fit=crop'],
+    externalLink: "https://example.com/property/6",
     isActive: true,
     views: 178
   }
