@@ -1,16 +1,94 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/components/ui/use-toast";
+import { register } from '@/services/authService';
 
 const Signup = () => {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    password: '',
+    agreeTerms: false
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [id]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle signup logic here
-    console.log('Signup form submitted');
+    
+    if (!formData.agreeTerms) {
+      toast({
+        title: "Terms Required",
+        description: "You must agree to the Terms of Service and Privacy Policy.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const userData = {
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone
+      };
+      
+      const response = await register(userData);
+      
+      toast({
+        title: "Account created!",
+        description: "Welcome to ClickProp! Your account has been created successfully.",
+      });
+      
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Registration failed",
+        description: "There was an error creating your account. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  const handleGoogleSignup = () => {
+    // This would integrate with your actual OAuth implementation
+    toast({
+      title: "Google Authentication",
+      description: "Google authentication will be implemented with a proper OAuth flow.",
+    });
+    
+    // For demo purposes, we'll simulate a successful signup
+    setTimeout(() => {
+      localStorage.setItem('token', 'google-demo-token');
+      localStorage.setItem('user', JSON.stringify({
+        _id: 'google-user-123',
+        name: 'Google User',
+        email: 'google.user@example.com',
+        role: 'user'
+      }));
+      navigate('/dashboard');
+    }, 1000);
   };
   
   return (
@@ -37,6 +115,8 @@ const Signup = () => {
                   id="firstName"
                   type="text"
                   placeholder="First name"
+                  value={formData.firstName}
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -47,6 +127,8 @@ const Signup = () => {
                   id="lastName"
                   type="text"
                   placeholder="Last name"
+                  value={formData.lastName}
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -58,6 +140,8 @@ const Signup = () => {
                 id="email"
                 type="email"
                 placeholder="your@email.com"
+                value={formData.email}
+                onChange={handleChange}
                 required
               />
             </div>
@@ -68,6 +152,8 @@ const Signup = () => {
                 id="phone"
                 type="tel"
                 placeholder="Your phone number"
+                value={formData.phone}
+                onChange={handleChange}
                 required
               />
             </div>
@@ -78,6 +164,8 @@ const Signup = () => {
                 id="password"
                 type="password"
                 placeholder="Choose a strong password"
+                value={formData.password}
+                onChange={handleChange}
                 required
               />
               <p className="text-xs text-clickprop-text-secondary mt-1">
@@ -86,8 +174,15 @@ const Signup = () => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox id="terms" required />
-              <Label htmlFor="terms" className="text-sm">
+              <Checkbox 
+                id="agreeTerms" 
+                checked={formData.agreeTerms}
+                onCheckedChange={(checked) => 
+                  setFormData(prev => ({ ...prev, agreeTerms: checked === true }))
+                }
+                required
+              />
+              <Label htmlFor="agreeTerms" className="text-sm">
                 I agree to the{' '}
                 <a href="#" className="text-clickprop-blue hover:underline">
                   Terms of Service
@@ -102,8 +197,9 @@ const Signup = () => {
             <Button
               type="submit"
               className="w-full bg-clickprop-blue hover:bg-clickprop-blue-dark"
+              disabled={isLoading}
             >
-              Create Account
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
 
@@ -119,8 +215,12 @@ const Signup = () => {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <Button variant="outline" className="w-full">
+            <div className="mt-6">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={handleGoogleSignup}
+              >
                 <svg
                   className="h-5 w-5 mr-2"
                   aria-hidden="true"
@@ -130,17 +230,6 @@ const Signup = () => {
                   <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032 c0-3.331,2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2 C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
                 </svg>
                 Google
-              </Button>
-              <Button variant="outline" className="w-full">
-                <svg
-                  className="h-5 w-5 mr-2"
-                  aria-hidden="true"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-2 16h-2v-6h2v6zm-1-6.891c-.607 0-1.1-.496-1.1-1.109 0-.612.492-1.109 1.1-1.109s1.1.497 1.1 1.109c0 .613-.493 1.109-1.1 1.109zm8 6.891h-1.998v-2.861c0-1.881-2.002-1.722-2.002 0v2.861h-2v-6h2v1.093c.872-1.616 4-1.736 4 1.548v3.359z" />
-                </svg>
-                LinkedIn
               </Button>
             </div>
           </div>
