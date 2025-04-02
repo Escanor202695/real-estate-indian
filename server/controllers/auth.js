@@ -1,6 +1,39 @@
 
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const passport = require('passport');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
+
+// Configure passport for Google OAuth
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google/callback`,
+  scope: ['profile', 'email']
+}, async (accessToken, refreshToken, profile, done) => {
+  try {
+    // Check if user already exists
+    let user = await User.findOne({ email: profile.emails[0].value });
+    
+    if (!user) {
+      // Create new user from Google profile
+      user = await User.create({
+        name: profile.displayName,
+        email: profile.emails[0].value,
+        password: Math.random().toString(36).slice(-8), // Random password
+        googleId: profile.id
+      });
+    } else if (!user.googleId) {
+      // Link Google account to existing user
+      user.googleId = profile.id;
+      await user.save();
+    }
+    
+    done(null, user);
+  } catch (error) {
+    done(error, null);
+  }
+}));
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -122,4 +155,43 @@ exports.getMe = async (req, res) => {
       message: 'Server Error'
     });
   }
+};
+
+// @desc    Google OAuth login/register
+// @route   GET /api/auth/google
+// @access  Public
+exports.googleAuth = passport.authenticate('google', {
+  scope: ['profile', 'email']
+});
+
+// @desc    Google OAuth callback
+// @route   GET /api/auth/google/callback
+// @access  Public
+exports.googleCallback = (req, res, next) => {
+  passport.authenticate('google', { session: false }, (err, user) => {
+    if (err) {
+      return next(err);
+    }
+    
+    if (!user) {
+      return res.redirect('/login?error=google_auth_failed');
+    }
+    
+    // Generate token
+    const token = generateToken(user._id);
+    
+    // Redirect with token and user data in URL parameters
+    // The frontend will handle parsing these and setting in localStorage
+    res.redirect(
+      `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth-callback` +
+      `?token=${token}` +
+      `&user=${encodeURIComponent(JSON.stringify({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role
+      }))}`
+    );
+  })(req, res, next);
 };
