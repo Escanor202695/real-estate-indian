@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PropertyList from '@/components/properties/PropertyList';
 import PropertiesPagination from '@/components/properties/PropertiesPagination';
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Property } from '@/types/property';
-import { Search, Filter, Grid, List } from 'lucide-react';
+import { Search, Filter, BookmarkPlus } from 'lucide-react';
+import { useToast } from "@/components/ui/use-toast";
 
 // Property data from external source
 const propertiesData: Property[] = [
@@ -154,14 +155,16 @@ const propertiesData: Property[] = [
 
 const Properties = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [properties, setProperties] = useState<Property[]>(propertiesData);
   const [loading, setLoading] = useState(false);
   
-  // Load initial values from localStorage if available
-  const [location, setLocation] = useState(() => localStorage.getItem('searchLocation') || "");
-  const [propertyType, setPropertyType] = useState(() => localStorage.getItem('searchPropertyType') || "all");
-  const [status, setStatus] = useState(() => localStorage.getItem('searchStatus') || "all");
+  // Load initial values from URL params first, then localStorage if not present
+  const [locationQuery, setLocationQuery] = useState("");
+  const [propertyType, setPropertyType] = useState("all");
+  const [status, setStatus] = useState("all");
   const [priceRange, setPriceRange] = useState([0, 25000000]);
   const [bedrooms, setBedrooms] = useState("any");
   
@@ -169,22 +172,64 @@ const Properties = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [propertiesPerPage] = useState(6);
   
+  // Load filters from URL params or localStorage on initial render
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const locationParam = params.get('location');
+    const typeParam = params.get('type');
+    const statusParam = params.get('status');
+    
+    // Set location from URL or localStorage
+    if (locationParam) {
+      setLocationQuery(locationParam);
+    } else {
+      const savedLocation = localStorage.getItem('searchLocation');
+      if (savedLocation) setLocationQuery(savedLocation);
+    }
+    
+    // Set type from URL or localStorage
+    if (typeParam) {
+      setPropertyType(typeParam);
+    } else {
+      const savedType = localStorage.getItem('searchPropertyType');
+      if (savedType) setPropertyType(savedType);
+    }
+    
+    // Set status from URL or localStorage
+    if (statusParam) {
+      setStatus(statusParam);
+    } else {
+      const savedStatus = localStorage.getItem('searchStatus');
+      if (savedStatus) setStatus(savedStatus);
+    }
+    
+    // Apply filters based on URL params or localStorage
+    applyFilters(true);
+  }, [location.search]);
+  
   const toggleFilter = () => {
     setIsFilterOpen(!isFilterOpen);
   };
   
-  const applyFilters = () => {
-    setLoading(true);
+  const applyFilters = (isInitialLoad = false) => {
+    if (!isInitialLoad) {
+      setLoading(true);
+    }
     
     // Save search params to localStorage
-    localStorage.setItem('searchLocation', location);
+    localStorage.setItem('searchLocation', locationQuery);
     localStorage.setItem('searchPropertyType', propertyType);
     localStorage.setItem('searchStatus', status);
     
+    // Update URL if not initial load
+    if (!isInitialLoad) {
+      updateUrl();
+    }
+    
     setTimeout(() => {
       const filtered = propertiesData.filter((property) => {
-        if (location) {
-          const locationRegex = new RegExp(location, 'i');
+        if (locationQuery) {
+          const locationRegex = new RegExp(locationQuery, 'i');
           if (!locationRegex.test(property.location.city) && 
               !locationRegex.test(property.location.address) &&
               !locationRegex.test(property.title)) {
@@ -217,20 +262,38 @@ const Properties = () => {
     }, 500);
   };
 
-  // Function to navigate to search page with current filters
-  const navigateToSearch = () => {
+  // Update URL with current filter values
+  const updateUrl = () => {
     const params = new URLSearchParams();
     
-    if (location) params.append('location', location);
+    if (locationQuery) params.append('location', locationQuery);
     if (propertyType !== 'all') params.append('type', propertyType);
     if (status !== 'all') params.append('status', status);
     
-    // Save current values to localStorage
-    localStorage.setItem('searchLocation', location);
-    localStorage.setItem('searchPropertyType', propertyType);
-    localStorage.setItem('searchStatus', status);
+    const newUrl = `/properties?${params.toString()}`;
+    navigate(newUrl, { replace: true });
+  };
+
+  // Save the current search
+  const saveSearch = () => {
+    // Here you would typically save to user account, but for now just localStorage
+    const searchParams = {
+      location: locationQuery,
+      propertyType,
+      status,
+      priceRange,
+      bedrooms,
+      savedAt: new Date().toISOString()
+    };
     
-    navigate(`/search?${params.toString()}`);
+    const savedSearches = JSON.parse(localStorage.getItem('savedSearches') || '[]');
+    savedSearches.push(searchParams);
+    localStorage.setItem('savedSearches', JSON.stringify(savedSearches));
+    
+    toast({
+      title: "Search Saved",
+      description: "Your property search has been saved successfully.",
+    });
   };
 
   // Get current properties based on pagination
@@ -245,12 +308,33 @@ const Properties = () => {
     window.scrollTo(0, 0);
   };
   
+  // Helper function to construct the search summary
+  const getSearchSummary = () => {
+    let summary = '';
+    
+    if (propertyType && propertyType !== 'all') {
+      summary += propertyType.charAt(0).toUpperCase() + propertyType.slice(1) + 's ';
+    } else {
+      summary += 'Properties ';
+    }
+    
+    if (status && status !== 'all') {
+      summary += `for ${status === 'sale' ? 'sale' : 'rent'} `;
+    }
+    
+    if (locationQuery) {
+      summary += `in ${locationQuery}`;
+    }
+    
+    return summary || 'All Properties';
+  };
+  
   return (
     <div className="bg-white">
       <div className="bg-clickprop-blue py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold text-white text-center">
-            Browse All Properties
+            {locationQuery ? `Properties in ${locationQuery}` : 'Browse All Properties'}
           </h1>
         </div>
       </div>
@@ -270,15 +354,23 @@ const Properties = () => {
             <Button
               variant="default"
               className="bg-clickprop-blue hover:bg-clickprop-blue-dark"
-              onClick={navigateToSearch}
+              onClick={() => applyFilters()}
             >
               <Search className="h-4 w-4 mr-2" />
-              Advanced Search
+              Search Properties
             </Button>
           </div>
           
           <div className="flex items-center">
-            <span className="text-clickprop-text-secondary mr-2">
+            <Button
+              variant="outline"
+              className="flex items-center"
+              onClick={saveSearch}
+            >
+              <BookmarkPlus className="h-4 w-4 mr-2" />
+              Save Search
+            </Button>
+            <span className="text-clickprop-text-secondary ml-4">
               {properties.length} properties
             </span>
           </div>
@@ -297,8 +389,8 @@ const Properties = () => {
                   id="location"
                   type="text"
                   placeholder="City or locality"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  value={locationQuery}
+                  onChange={(e) => setLocationQuery(e.target.value)}
                 />
               </div>
               
@@ -376,7 +468,7 @@ const Properties = () => {
               
               <Button
                 className="w-full bg-clickprop-blue hover:bg-clickprop-blue-dark"
-                onClick={applyFilters}
+                onClick={() => applyFilters()}
               >
                 <Search className="h-4 w-4 mr-2" />
                 Apply Filters
@@ -385,15 +477,27 @@ const Properties = () => {
           </div>
           
           <div className="lg:w-3/4">
+            {/* Search summary info box */}
+            {locationQuery && (
+              <div className="p-4 bg-clickprop-bg-gray rounded-lg flex items-center mb-6">
+                <Search className="h-5 w-5 text-clickprop-blue mr-2" />
+                <span className="text-clickprop-text-secondary">
+                  Showing <span className="font-medium text-clickprop-text">{getSearchSummary()}</span>
+                </span>
+              </div>
+            )}
+            
             <PropertyList properties={currentProperties} loading={loading} />
             
-            <div className="flex justify-center">
-              <PropertiesPagination 
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </div>
+            {properties.length > 0 && (
+              <div className="flex justify-center mt-8">
+                <PropertiesPagination 
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
