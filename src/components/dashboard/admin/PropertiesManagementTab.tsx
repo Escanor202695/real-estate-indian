@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getProperties, deleteProperty } from '@/services/propertyService';
-import { notifyUsers } from '@/services/adminService';
+// import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+// import { getProperties, deleteProperty } from '@/services/propertyService';
+// import { notifyUsers } from '@/services/adminService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -59,16 +60,41 @@ const dummyProperties = [
     createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
     views: 256,
     images: ['https://images.unsplash.com/photo-1568605114967-8130f3a36994']
+  },
+  {
+    _id: 'prop5',
+    title: 'Premium Office Space',
+    type: 'commercial',
+    status: 'rent',
+    price: 180000,
+    location: { city: 'Gurgaon' },
+    createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
+    views: 112,
+    images: ['https://images.unsplash.com/photo-1497366811353-6870744d04b2']
+  },
+  {
+    _id: 'prop6',
+    title: '2BHK Flat in Suburban Area',
+    type: 'flat',
+    status: 'rent',
+    price: 18000,
+    location: { city: 'Pune' },
+    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    views: 198,
+    images: ['https://images.unsplash.com/photo-1493809842364-78817add7ffb']
   }
 ];
 
 const PropertiesManagementTab = () => {
-  const queryClient = useQueryClient();
+  // const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
+  // Commented out API calls
+  /*
   const { data, isLoading, error } = useQuery({
     queryKey: ['adminProperties', searchQuery, selectedType, selectedStatus],
     queryFn: () => {
@@ -101,14 +127,22 @@ const PropertiesManagementTab = () => {
       toast.error('Failed to send notifications');
     }
   });
+  */
 
   const handleDeleteProperty = (id: string) => {
-    deleteMutation.mutate(id);
+    // Simulate delete operation
+    toast.success('Property deleted successfully');
+    // deleteMutation.mutate(id);
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
+    // Simulate search
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+    // queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
   };
 
   const handleSelectProperty = (id: string) => {
@@ -128,22 +162,39 @@ const PropertiesManagementTab = () => {
   };
 
   const handleNotifyUsers = () => {
+    // Simulate notification
+    toast.success(`Notified users about ${selectedProperties.length} properties`);
+    setSelectedProperties([]);
+    /*
     if (selectedProperties.length > 0) {
       notifyMutation.mutate(selectedProperties);
     }
+    */
   };
 
-  const properties = (error || !data?.data || data.data.length === 0) 
-    ? dummyProperties 
-    : data.data;
-
-  if (isLoading) {
-    return <div className="p-4">Loading properties...</div>;
+  // Apply filtering to dummy data
+  let filteredProperties = dummyProperties;
+  
+  if (searchQuery) {
+    filteredProperties = filteredProperties.filter(property => 
+      property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      property.location.city.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+  
+  if (selectedType !== 'all') {
+    filteredProperties = filteredProperties.filter(property => 
+      property.type === selectedType
+    );
+  }
+  
+  if (selectedStatus !== 'all') {
+    filteredProperties = filteredProperties.filter(property => 
+      property.status === selectedStatus
+    );
   }
 
-  if (error) {
-    return <div className="p-4 text-red-500">Error loading properties</div>;
-  }
+  const properties = filteredProperties;
 
   return (
     <Card>
@@ -211,10 +262,9 @@ const PropertiesManagementTab = () => {
                 variant="outline" 
                 className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
                 onClick={handleNotifyUsers}
-                disabled={notifyMutation.isPending}
               >
                 <Bell className="h-4 w-4 mr-1" />
-                {notifyMutation.isPending ? 'Sending...' : 'Notify Users'}
+                Notify Users
               </Button>
               <Button 
                 size="sm" 
@@ -229,7 +279,12 @@ const PropertiesManagementTab = () => {
           </div>
         )}
         
-        {properties.length === 0 ? (
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2">Loading properties...</p>
+          </div>
+        ) : properties.length === 0 ? (
           <div className="text-center py-8">
             <Home className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-lg font-medium text-gray-900">No properties found</h3>

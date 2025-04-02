@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getCities } from '@/services/cityService';
+// import { useQuery } from '@tanstack/react-query';
+// import { getCities } from '@/services/cityService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { MapPin, Search, Edit, Plus, BarChart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// Dummy data for cities when API fails or returns empty
+// Dummy data for cities
 const dummyCities = [
   {
     _id: 'city1',
@@ -45,26 +45,48 @@ const dummyCities = [
     state: 'Tamil Nadu',
     propertyCount: 82,
     searchCount: 198
+  },
+  {
+    _id: 'city6',
+    name: 'Kolkata',
+    state: 'West Bengal',
+    propertyCount: 78,
+    searchCount: 176
+  },
+  {
+    _id: 'city7',
+    name: 'Pune',
+    state: 'Maharashtra',
+    propertyCount: 65,
+    searchCount: 154
+  },
+  {
+    _id: 'city8',
+    name: 'Ahmedabad',
+    state: 'Gujarat',
+    propertyCount: 59,
+    searchCount: 122
   }
 ];
 
 const CitiesManagementTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
   
+  // Commented out API call
+  /*
   const { data, isLoading, error } = useQuery({
     queryKey: ['adminCities'],
     queryFn: getCities
   });
+  */
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // Client-side filtering is already implemented
   };
 
-  // Use dummy data if API call has error or returns empty array
-  const allCities = (error || !data?.data || data.data.length === 0) 
-    ? dummyCities 
-    : data.data;
+  // Use dummy data directly
+  const allCities = dummyCities;
 
   // Filter cities based on search query
   let cities = allCities;
