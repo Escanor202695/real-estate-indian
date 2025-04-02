@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PropertyList from '@/components/properties/PropertyList';
 import PropertiesPagination from '@/components/properties/PropertiesPagination';
 import { Button } from "@/components/ui/button";
@@ -152,13 +153,15 @@ const propertiesData: Property[] = [
 ];
 
 const Properties = () => {
+  const navigate = useNavigate();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [properties, setProperties] = useState<Property[]>(propertiesData);
   const [loading, setLoading] = useState(false);
   
-  const [location, setLocation] = useState("");
-  const [propertyType, setPropertyType] = useState("all");
-  const [status, setStatus] = useState("all");
+  // Load initial values from localStorage if available
+  const [location, setLocation] = useState(() => localStorage.getItem('searchLocation') || "");
+  const [propertyType, setPropertyType] = useState(() => localStorage.getItem('searchPropertyType') || "all");
+  const [status, setStatus] = useState(() => localStorage.getItem('searchStatus') || "all");
   const [priceRange, setPriceRange] = useState([0, 25000000]);
   const [bedrooms, setBedrooms] = useState("any");
   
@@ -173,11 +176,20 @@ const Properties = () => {
   const applyFilters = () => {
     setLoading(true);
     
+    // Save search params to localStorage
+    localStorage.setItem('searchLocation', location);
+    localStorage.setItem('searchPropertyType', propertyType);
+    localStorage.setItem('searchStatus', status);
+    
     setTimeout(() => {
       const filtered = propertiesData.filter((property) => {
-        if (location && !property.location.city.toLowerCase().includes(location.toLowerCase()) && 
-            !property.location.address.toLowerCase().includes(location.toLowerCase())) {
-          return false;
+        if (location) {
+          const locationRegex = new RegExp(location, 'i');
+          if (!locationRegex.test(property.location.city) && 
+              !locationRegex.test(property.location.address) &&
+              !locationRegex.test(property.title)) {
+            return false;
+          }
         }
         
         if (propertyType !== 'all' && property.type !== propertyType) {
@@ -203,6 +215,22 @@ const Properties = () => {
       setCurrentPage(1); // Reset to first page when applying filters
       setLoading(false);
     }, 500);
+  };
+
+  // Function to navigate to search page with current filters
+  const navigateToSearch = () => {
+    const params = new URLSearchParams();
+    
+    if (location) params.append('location', location);
+    if (propertyType !== 'all') params.append('type', propertyType);
+    if (status !== 'all') params.append('status', status);
+    
+    // Save current values to localStorage
+    localStorage.setItem('searchLocation', location);
+    localStorage.setItem('searchPropertyType', propertyType);
+    localStorage.setItem('searchStatus', status);
+    
+    navigate(`/search?${params.toString()}`);
   };
 
   // Get current properties based on pagination
@@ -237,6 +265,15 @@ const Properties = () => {
             >
               <Filter className="h-4 w-4 mr-2" />
               Filters
+            </Button>
+            
+            <Button
+              variant="default"
+              className="bg-clickprop-blue hover:bg-clickprop-blue-dark"
+              onClick={navigateToSearch}
+            >
+              <Search className="h-4 w-4 mr-2" />
+              Advanced Search
             </Button>
           </div>
           

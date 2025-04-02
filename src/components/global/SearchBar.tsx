@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,15 +7,43 @@ import { Search } from 'lucide-react';
 
 const SearchBar = ({ className }: { className?: string }) => {
   const navigate = useNavigate();
-  const [location, setLocation] = useState("");
+  const location = useLocation();
+  const [locationQuery, setLocationQuery] = useState("");
   const [propertyType, setPropertyType] = useState("all");
   const [status, setStatus] = useState("all");
 
+  useEffect(() => {
+    if (location.pathname === '/search') {
+      const params = new URLSearchParams(location.search);
+      const locationParam = params.get('location');
+      const typeParam = params.get('type');
+      const statusParam = params.get('status');
+      
+      if (locationParam) setLocationQuery(locationParam);
+      if (typeParam) setPropertyType(typeParam);
+      if (statusParam) setStatus(statusParam);
+    } 
+    else {
+      const savedLocation = localStorage.getItem('searchLocation');
+      const savedType = localStorage.getItem('searchPropertyType');
+      const savedStatus = localStorage.getItem('searchStatus');
+      
+      if (savedLocation) setLocationQuery(savedLocation);
+      if (savedType) setPropertyType(savedType);
+      if (savedStatus) setStatus(savedStatus);
+    }
+  }, [location.pathname, location.search]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    localStorage.setItem('searchLocation', locationQuery);
+    localStorage.setItem('searchPropertyType', propertyType);
+    localStorage.setItem('searchStatus', status);
+    
     const params = new URLSearchParams();
     
-    if (location) params.append('location', location);
+    if (locationQuery) params.append('location', locationQuery);
     if (propertyType !== 'all') params.append('type', propertyType);
     if (status !== 'all') params.append('status', status);
     
@@ -34,8 +61,8 @@ const SearchBar = ({ className }: { className?: string }) => {
             id="location"
             type="text"
             placeholder="City, Locality or Project"
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            value={locationQuery}
+            onChange={(e) => setLocationQuery(e.target.value)}
             className="w-full"
           />
         </div>
