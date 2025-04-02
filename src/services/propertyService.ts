@@ -38,6 +38,6 @@ export const deleteProperty = async (id: string) => {
 };
 
 export const importProperties = async (propertiesData: Partial<Property>[]) => {
-  const response = await api.post('/properties/import', propertiesData);
+  const response = await api.post('/properties/import', { properties: propertiesData });
   return response.data;
 };
