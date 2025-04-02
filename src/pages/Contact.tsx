@@ -91,8 +91,8 @@ const Contact = () => {
         
         <p className="text-gray-600 mb-8">
           {isBugReport 
-            ? 'Found a bug in the platform? Please describe it in detail below and we'll fix it as soon as possible.'
-            : 'Have questions or feedback? We'd love to hear from you. Fill out the form below and we'll get back to you shortly.'
+            ? 'Found a bug in the platform? Please describe it in detail below and we\'ll fix it as soon as possible.'
+            : 'Have questions or feedback? We\'d love to hear from you. Fill out the form below and we\'ll get back to you shortly.'
           }
         </p>
         
