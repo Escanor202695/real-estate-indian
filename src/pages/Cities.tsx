@@ -191,15 +191,30 @@ const Cities = () => {
   const sortedStateEntries = Object.entries(citiesByState)
     .sort(([stateA], [stateB]) => stateA.localeCompare(stateB));
   
-  // Calculate how many states to put in each column
-  const statesPerColumn = Math.ceil(sortedStateEntries.length / 3);
+  // Calculate the total number of cities
+  const totalCities = sortedStateEntries.reduce((total, [_, cities]) => total + cities.length, 0);
   
-  // Split the states into 3 columns
-  const columns = [
-    sortedStateEntries.slice(0, statesPerColumn),
-    sortedStateEntries.slice(statesPerColumn, statesPerColumn * 2),
-    sortedStateEntries.slice(statesPerColumn * 2)
-  ];
+  // Calculate cities per column (roughly equal distribution)
+  const citiesPerColumn = Math.ceil(totalCities / 3);
+  
+  // Create columns based on city count
+  const columns: Array<Array<[string, City[]]>> = [[], [], []];
+  let currentColumn = 0;
+  let currentColumnCityCount = 0;
+  
+  sortedStateEntries.forEach(stateEntry => {
+    const stateCityCount = stateEntry[1].length;
+    
+    // If adding this state would exceed the target count and we're not on the last column,
+    // move to the next column
+    if (currentColumnCityCount + stateCityCount > citiesPerColumn && currentColumn < 2) {
+      currentColumn++;
+      currentColumnCityCount = 0;
+    }
+    
+    columns[currentColumn].push(stateEntry);
+    currentColumnCityCount += stateCityCount;
+  });
   
   return (
     <div className="bg-clickprop-bg-light min-h-screen">
