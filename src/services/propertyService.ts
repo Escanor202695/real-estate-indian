@@ -12,6 +12,11 @@ export const getProperty = async (id: string) => {
   return response.data;
 };
 
+export const getLatestProperties = async () => {
+  const response = await api.get('/properties/latest');
+  return response.data;
+};
+
 export const getFeaturedProperties = async () => {
   const response = await api.get('/properties/featured');
   return response.data;

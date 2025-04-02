@@ -162,6 +162,28 @@ exports.deleteProperty = async (req, res) => {
   }
 };
 
+// @desc    Get latest properties
+// @route   GET /api/properties/latest
+// @access  Public
+exports.getLatestProperties = async (req, res) => {
+  try {
+    const properties = await Property.find({ isActive: true })
+      .sort({ createdAt: -1 })
+      .limit(8);
+    
+    res.status(200).json({
+      success: true,
+      count: properties.length,
+      data: properties
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: 'Server Error'
+    });
+  }
+};
+
 // @desc    Get featured properties
 // @route   GET /api/properties/featured
 // @access  Public
