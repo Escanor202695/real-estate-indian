@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "@/components/global/Navbar";
 import Footer from "@/components/global/Footer";
+import React from "react";
 
 // Pages
 import Index from "./pages/Index";
@@ -34,50 +36,54 @@ import AdminCities from "./pages/dashboard/admin/Cities";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+const App = () => {
+  return (
+    <React.StrictMode>
       <BrowserRouter>
-        <div className="flex flex-col min-h-screen">
-          <Navbar />
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/properties" element={<Properties />} />
-              <Route path="/cities" element={<Cities />} />
-              <Route path="/cities/:name" element={<CityDetail />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/contact" element={<Contact />} />
-              <Route path="/auth-callback" element={<AuthCallback />} />
-              
-              {/* User Dashboard Routes */}
-              <Route path="/dashboard" element={<UserDashboard />}>
-                <Route index element={<Profile />} />
-                <Route path="saved-searches" element={<SavedSearches />} />
-                <Route path="recent-searches" element={<RecentSearches />} />
-                <Route path="alerts" element={<PropertyAlerts />} />
-                <Route path="password" element={<ChangePassword />} />
-              </Route>
-              
-              {/* Admin Dashboard Routes */}
-              <Route path="/admin" element={<AdminDashboard />}>
-                <Route index element={<AdminDashboardHome />} />
-                <Route path="properties" element={<AdminProperties />} />
-                <Route path="users" element={<AdminUsers />} />
-                <Route path="cities" element={<AdminCities />} />
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <div className="flex flex-col min-h-screen">
+              <Navbar />
+              <main className="flex-grow">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/properties" element={<Properties />} />
+                  <Route path="/cities" element={<Cities />} />
+                  <Route path="/cities/:name" element={<CityDetail />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/auth-callback" element={<AuthCallback />} />
+                  
+                  {/* User Dashboard Routes */}
+                  <Route path="/dashboard" element={<UserDashboard />}>
+                    <Route index element={<Profile />} />
+                    <Route path="saved-searches" element={<SavedSearches />} />
+                    <Route path="recent-searches" element={<RecentSearches />} />
+                    <Route path="alerts" element={<PropertyAlerts />} />
+                    <Route path="password" element={<ChangePassword />} />
+                  </Route>
+                  
+                  {/* Admin Dashboard Routes */}
+                  <Route path="/admin" element={<AdminDashboard />}>
+                    <Route index element={<AdminDashboardHome />} />
+                    <Route path="properties" element={<AdminProperties />} />
+                    <Route path="users" element={<AdminUsers />} />
+                    <Route path="cities" element={<AdminCities />} />
+                  </Route>
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+          </TooltipProvider>
+        </QueryClientProvider>
       </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+    </React.StrictMode>
+  );
+};
 
 export default App;
