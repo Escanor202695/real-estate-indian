@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import PropertyList from '@/components/properties/PropertyList';
+import PropertiesPagination from '@/components/properties/PropertiesPagination';
 import SearchBar from '@/components/global/SearchBar';
 import { Property } from '@/types/property';
 import { Button } from "@/components/ui/button";
@@ -155,6 +156,10 @@ const Search = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [propertiesPerPage] = useState(6);
+  
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     setSearchParams(params);
@@ -189,9 +194,22 @@ const Search = () => {
       });
       
       setProperties(filteredProperties);
+      setCurrentPage(1); // Reset to first page when search params change
       setLoading(false);
     }, 1000);
   }, [location.search]);
+  
+  // Get current properties based on pagination
+  const indexOfLastProperty = currentPage * propertiesPerPage;
+  const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
+  const currentProperties = properties.slice(indexOfFirstProperty, indexOfLastProperty);
+  const totalPages = Math.ceil(properties.length / propertiesPerPage);
+
+  // Change page
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo(0, 0);
+  };
   
   // Helper function to construct the search summary
   const getSearchSummary = () => {
@@ -257,7 +275,15 @@ const Search = () => {
           </div>
         )}
         
-        <PropertyList properties={properties} loading={loading} />
+        <PropertyList properties={currentProperties} loading={loading} />
+        
+        <div className="flex justify-center">
+          <PropertiesPagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        </div>
       </div>
     </div>
   );

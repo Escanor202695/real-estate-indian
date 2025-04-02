@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import PropertyList from '@/components/properties/PropertyList';
+import PropertiesPagination from '@/components/properties/PropertiesPagination';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -160,6 +162,10 @@ const Properties = () => {
   const [priceRange, setPriceRange] = useState([0, 25000000]);
   const [bedrooms, setBedrooms] = useState("any");
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [propertiesPerPage] = useState(6);
+  
   const toggleFilter = () => {
     setIsFilterOpen(!isFilterOpen);
   };
@@ -194,8 +200,21 @@ const Properties = () => {
       });
       
       setProperties(filtered);
+      setCurrentPage(1); // Reset to first page when applying filters
       setLoading(false);
     }, 500);
+  };
+
+  // Get current properties based on pagination
+  const indexOfLastProperty = currentPage * propertiesPerPage;
+  const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
+  const currentProperties = properties.slice(indexOfFirstProperty, indexOfLastProperty);
+  const totalPages = Math.ceil(properties.length / propertiesPerPage);
+
+  // Change page
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo(0, 0);
   };
   
   return (
@@ -329,7 +348,15 @@ const Properties = () => {
           </div>
           
           <div className="lg:w-3/4">
-            <PropertyList properties={properties} loading={loading} />
+            <PropertyList properties={currentProperties} loading={loading} />
+            
+            <div className="flex justify-center">
+              <PropertiesPagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
           </div>
         </div>
       </div>
