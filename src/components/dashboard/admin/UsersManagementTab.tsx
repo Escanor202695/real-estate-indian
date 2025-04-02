@@ -1,196 +1,161 @@
+
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getUsers, getUser, updateUser, deleteUser } from '@/services/adminService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Trash2, Edit, Search, UserPlus, User, UserCheck, UserX } from 'lucide-react';
+import { Trash2, Edit, Search, User, Plus, Mail, Check } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/components/ui/use-toast';
 
+// Dummy data for users
 const dummyUsers = [
   {
     _id: 'user1',
     name: 'Rahul Sharma',
     email: 'rahul.sharma@example.com',
-    role: 'admin',
-    isActive: true,
-    phone: '+91 9876543210',
-    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+    role: 'user',
+    status: 'active',
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    savedProperties: 12,
+    searches: 45
   },
   {
     _id: 'user2',
     name: 'Priya Patel',
     email: 'priya.patel@example.com',
     role: 'user',
-    isActive: true,
-    phone: '+91 9876543211',
+    status: 'active',
     createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+    savedProperties: 5,
+    searches: 27
   },
   {
     _id: 'user3',
-    name: 'Amit Kumar',
-    email: 'amit.kumar@example.com',
-    role: 'user',
-    isActive: false,
-    phone: null,
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    name: 'Vikram Singh',
+    email: 'vikram.singh@example.com',
+    role: 'admin',
+    status: 'active',
+    createdAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
+    savedProperties: 3,
+    searches: 15
   },
   {
     _id: 'user4',
-    name: 'Anjali Singh',
-    email: 'anjali.singh@example.com',
+    name: 'Ananya Desai',
+    email: 'ananya.desai@example.com',
     role: 'user',
-    isActive: true,
-    phone: '+91 9876543212',
+    status: 'inactive',
+    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+    savedProperties: 0,
+    searches: 8
+  },
+  {
+    _id: 'user5',
+    name: 'Arjun Nair',
+    email: 'arjun.nair@example.com',
+    role: 'user',
+    status: 'active',
     createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    savedProperties: 7,
+    searches: 32
+  },
+  {
+    _id: 'user6',
+    name: 'Sneha Reddy',
+    email: 'sneha.reddy@example.com',
+    role: 'user',
+    status: 'pending',
+    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    savedProperties: 0,
+    searches: 3
   }
 ];
 
-const dummyUserDetails = {
-  user: {
-    _id: 'user1',
-    name: 'Rahul Sharma',
-    email: 'rahul.sharma@example.com',
-    role: 'admin',
-    isActive: true,
-    phone: '+91 9876543210',
-    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  preferences: {
-    savedSearches: [
-      { id: 'search1', name: 'Apartments in Mumbai' },
-      { id: 'search2', name: 'Villas in Bangalore' }
-    ]
-  }
-};
-
 const UsersManagementTab = () => {
-  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [editUser, setEditUser] = useState<any>(null);
-  
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['adminUsers'],
-    queryFn: getUsers
-  });
-
-  const { data: selectedUserData, isLoading: isLoadingUser } = useQuery({
-    queryKey: ['adminUser', selectedUser],
-    queryFn: () => getUser(selectedUser),
-    enabled: !!selectedUser,
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: (userData: any) => updateUser(userData.id, {
-      name: userData.name,
-      email: userData.email,
-      phone: userData.phone,
-      role: userData.role,
-      isActive: userData.isActive
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-      toast.success('User updated successfully');
-      setEditUser(null);
-    },
-    onError: () => {
-      toast.error('Failed to update user');
-    }
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
-      toast.success('User deleted successfully');
-    },
-    onError: () => {
-      toast.error('Failed to delete user');
-    }
-  });
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleDeleteUser = (id: string) => {
-    deleteMutation.mutate(id);
+    // Simulate delete operation
+    toast({
+      title: "Success",
+      description: "User deleted successfully",
+    });
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Filtering is done client-side for simplicity
+    // Simulate search
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
   };
 
-  const handleEditUser = (user: any) => {
-    setEditUser({
-      id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone || '',
-      role: user.role,
-      isActive: user.isActive
+  const handleSelectUser = (id: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(id) 
+        ? prev.filter(userId => userId !== id)
+        : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (users.length > 0 && selectedUsers.length === users.length) {
+      setSelectedUsers([]);
+    } else {
+      setSelectedUsers(users.map(user => user._id));
+    }
+  };
+
+  const handleSendEmails = () => {
+    // Simulate email sending
+    toast({
+      title: "Success",
+      description: `Emails sent to ${selectedUsers.length} users`,
     });
+    setSelectedUsers([]);
   };
 
-  const handleUpdateUser = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateMutation.mutate(editUser);
-  };
-
-  const handleViewUser = (id: string) => {
-    setSelectedUser(id);
-  };
-
-  const users = (error || !data?.data || data.data.length === 0) 
-    ? dummyUsers 
-    : data.data;
-
-  let filteredUsers = users;
+  // Apply filtering to dummy data
+  let filteredUsers = dummyUsers;
+  
   if (searchQuery) {
-    const query = searchQuery.toLowerCase();
-    filteredUsers = filteredUsers.filter((user: any) => 
-      user.name.toLowerCase().includes(query) || 
-      user.email.toLowerCase().includes(query)
+    filteredUsers = filteredUsers.filter(user => 
+      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }
+  
+  if (selectedRole !== 'all') {
+    filteredUsers = filteredUsers.filter(user => 
+      user.role === selectedRole
+    );
+  }
+  
+  if (selectedStatus !== 'all') {
+    filteredUsers = filteredUsers.filter(user => 
+      user.status === selectedStatus
     );
   }
 
-  if (roleFilter !== 'all') {
-    filteredUsers = filteredUsers.filter((user: any) => user.role === roleFilter);
-  }
-
-  if (statusFilter !== 'all') {
-    filteredUsers = filteredUsers.filter((user: any) => {
-      if (statusFilter === 'active') return user.isActive;
-      return !user.isActive;
-    });
-  }
-
-  const userDetails = (!selectedUserData || error) 
-    ? { data: dummyUserDetails } 
-    : selectedUserData;
-
-  if (isLoading) {
-    return <div className="p-4">Loading users...</div>;
-  }
-
-  if (error) {
-    return <div className="p-4 text-red-500">Error loading users</div>;
-  }
+  const users = filteredUsers;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Users Management</CardTitle>
         <Button className="bg-clickprop-blue hover:bg-clickprop-blue-dark">
-          <UserPlus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2" />
           Add User
         </Button>
       </CardHeader>
@@ -209,7 +174,7 @@ const UsersManagementTab = () => {
           </form>
           
           <div className="flex gap-2">
-            <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <Select value={selectedRole} onValueChange={setSelectedRole}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Role" />
               </SelectTrigger>
@@ -220,7 +185,7 @@ const UsersManagementTab = () => {
               </SelectContent>
             </Select>
             
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -228,251 +193,104 @@ const UsersManagementTab = () => {
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
         
-        {filteredUsers.length === 0 ? (
+        {selectedUsers.length > 0 && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-md flex items-center justify-between">
+            <div className="flex items-center">
+              <Check className="h-4 w-4 text-blue-500 mr-2" />
+              <span className="text-sm text-blue-700">
+                {selectedUsers.length} users selected
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                onClick={handleSendEmails}
+              >
+                <Mail className="h-4 w-4 mr-1" />
+                Send Email
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2">Loading users...</p>
+          </div>
+        ) : users.length === 0 ? (
           <div className="text-center py-8">
             <User className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-lg font-medium text-gray-900">No users found</h3>
             <p className="mt-1 text-sm text-gray-500">
-              Try adjusting your search filters or add a new user.
+              Try adjusting your search filters.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="whitespace-nowrap">
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
+                  <TableHead className="w-[30px]">
+                    <Checkbox 
+                      checked={users.length > 0 && selectedUsers.length === users.length}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Phone</TableHead>
                   <TableHead>Joined</TableHead>
+                  <TableHead>Saved Properties</TableHead>
+                  <TableHead>Searches</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.map((user: any) => (
+                {users.map((user) => (
                   <TableRow key={user._id}>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center">
-                        <div className="h-8 w-8 bg-clickprop-blue rounded-full flex items-center justify-center text-white mr-2">
-                          {user.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-medium">{user.name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
-                        </div>
-                      </div>
-                    </TableCell>
                     <TableCell>
-                      <Badge 
-                        variant="outline" 
-                        className={user.role === 'admin' 
-                          ? 'bg-purple-50 text-purple-700 border-purple-200' 
-                          : 'bg-blue-50 text-blue-700 border-blue-200'
-                        }
-                      >
+                      <Checkbox 
+                        checked={selectedUsers.includes(user._id)}
+                        onCheckedChange={() => handleSelectUser(user._id)}
+                      />
+                    </TableCell>
+                    <TableCell className="font-medium">{user.name}</TableCell>
+                    <TableCell>{user.email}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={user.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200'}>
                         {user.role === 'admin' ? 'Admin' : 'User'}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center">
-                        <div className={`h-2 w-2 rounded-full mr-2 ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
-                        <span>{user.isActive ? 'Active' : 'Inactive'}</span>
-                      </div>
+                      <Badge 
+                        variant="outline" 
+                        className={
+                          user.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 
+                          user.status === 'inactive' ? 'bg-red-50 text-red-700 border-red-200' :
+                          'bg-yellow-50 text-yellow-700 border-yellow-200'
+                        }
+                      >
+                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                      </Badge>
                     </TableCell>
-                    <TableCell>{user.phone || '-'}</TableCell>
                     <TableCell>{formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}</TableCell>
+                    <TableCell>{user.savedProperties}</TableCell>
+                    <TableCell>{user.searches}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline" onClick={() => handleViewUser(user._id)}>
-                              <Search className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-md">
-                            <DialogHeader>
-                              <DialogTitle>User Details</DialogTitle>
-                              <DialogDescription>
-                                View detailed information about the user
-                              </DialogDescription>
-                            </DialogHeader>
-                            {isLoadingUser ? (
-                              <div className="py-6 text-center">Loading user details...</div>
-                            ) : userDetails.data ? (
-                              <div className="py-4">
-                                <div className="flex justify-center mb-6">
-                                  <div className="h-20 w-20 bg-clickprop-blue rounded-full flex items-center justify-center text-white text-2xl">
-                                    {userDetails.data.user.name.charAt(0).toUpperCase()}
-                                  </div>
-                                </div>
-                                
-                                <div className="space-y-4">
-                                  <div>
-                                    <Label className="text-xs text-gray-500">Name</Label>
-                                    <div className="font-medium">{userDetails.data.user.name}</div>
-                                  </div>
-                                  
-                                  <div>
-                                    <Label className="text-xs text-gray-500">Email</Label>
-                                    <div className="font-medium">{userDetails.data.user.email}</div>
-                                  </div>
-                                  
-                                  <div>
-                                    <Label className="text-xs text-gray-500">Phone</Label>
-                                    <div className="font-medium">{userDetails.data.user.phone || '-'}</div>
-                                  </div>
-                                  
-                                  <div>
-                                    <Label className="text-xs text-gray-500">Role</Label>
-                                    <div>
-                                      <Badge 
-                                        variant="outline" 
-                                        className={userDetails.data.user.role === 'admin' 
-                                          ? 'bg-purple-50 text-purple-700 border-purple-200' 
-                                          : 'bg-blue-50 text-blue-700 border-blue-200'
-                                        }
-                                      >
-                                        {userDetails.data.user.role === 'admin' ? 'Administrator' : 'User'}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                  
-                                  <div>
-                                    <Label className="text-xs text-gray-500">Status</Label>
-                                    <div className="flex items-center">
-                                      <div className={`h-2 w-2 rounded-full mr-2 ${userDetails.data.user.isActive ? 'bg-green-500' : 'bg-red-500'}`} />
-                                      <span>{userDetails.data.user.isActive ? 'Active' : 'Inactive'}</span>
-                                    </div>
-                                  </div>
-                                  
-                                  <div>
-                                    <Label className="text-xs text-gray-500">Joined</Label>
-                                    <div className="font-medium">
-                                      {new Date(userDetails.data.user.createdAt).toLocaleDateString()}
-                                    </div>
-                                  </div>
-                                  
-                                  {userDetails.data.preferences && (
-                                    <div>
-                                      <Label className="text-xs text-gray-500">Saved Searches</Label>
-                                      <div className="font-medium">
-                                        {userDetails.data.preferences.savedSearches.length}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="py-6 text-center text-red-500">Failed to load user details</div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
-                        
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}>
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Edit User</DialogTitle>
-                              <DialogDescription>
-                                Make changes to the user details
-                              </DialogDescription>
-                            </DialogHeader>
-                            
-                            <form onSubmit={handleUpdateUser}>
-                              <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <Label htmlFor="name" className="text-right">
-                                    Name
-                                  </Label>
-                                  <Input
-                                    id="name"
-                                    value={editUser?.name || ''}
-                                    onChange={(e) => setEditUser({ ...editUser, name: e.target.value })}
-                                    className="col-span-3"
-                                  />
-                                </div>
-                                
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <Label htmlFor="email" className="text-right">
-                                    Email
-                                  </Label>
-                                  <Input
-                                    id="email"
-                                    value={editUser?.email || ''}
-                                    onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
-                                    className="col-span-3"
-                                  />
-                                </div>
-                                
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <Label htmlFor="phone" className="text-right">
-                                    Phone
-                                  </Label>
-                                  <Input
-                                    id="phone"
-                                    value={editUser?.phone || ''}
-                                    onChange={(e) => setEditUser({ ...editUser, phone: e.target.value })}
-                                    className="col-span-3"
-                                  />
-                                </div>
-                                
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <Label htmlFor="role" className="text-right">
-                                    Role
-                                  </Label>
-                                  <Select 
-                                    value={editUser?.role || 'user'} 
-                                    onValueChange={(value) => setEditUser({ ...editUser, role: value })}
-                                  >
-                                    <SelectTrigger id="role" className="col-span-3">
-                                      <SelectValue placeholder="Select role" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="user">User</SelectItem>
-                                      <SelectItem value="admin">Admin</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                  <Label htmlFor="status" className="text-right">
-                                    Status
-                                  </Label>
-                                  <div className="flex items-center space-x-2 col-span-3">
-                                    <Switch 
-                                      id="status" 
-                                      checked={editUser?.isActive}
-                                      onCheckedChange={(checked) => setEditUser({ ...editUser, isActive: checked })}
-                                    />
-                                    <Label htmlFor="status">
-                                      {editUser?.isActive ? 'Active' : 'Inactive'}
-                                    </Label>
-                                  </div>
-                                </div>
-                              </div>
-                              <DialogFooter>
-                                <Button 
-                                  type="submit" 
-                                  disabled={updateMutation.isPending}
-                                  className="bg-clickprop-blue hover:bg-clickprop-blue-dark"
-                                >
-                                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                                </Button>
-                              </DialogFooter>
-                            </form>
-                          </DialogContent>
-                        </Dialog>
-                        
+                        <Button size="sm" variant="outline">
+                          <Edit className="h-4 w-4" />
+                        </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button 
@@ -487,7 +305,7 @@ const UsersManagementTab = () => {
                             <AlertDialogHeader>
                               <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the user and all associated data.
+                                This action cannot be undone. This will permanently delete the user account.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
