@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { User, Bell, Heart, History, Lock, LogOut, Bug } from 'lucide-react';
 import { logout } from '@/services/authService';
 import { useNavigate } from 'react-router-dom';
@@ -92,19 +91,13 @@ const UserSidebar = () => {
           <span>Change Password</span>
         </NavLink>
         
-        <NavLink 
-          to="/contact" 
-          className={({ isActive }) => 
-            `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-              isActive 
-                ? 'bg-clickprop-blue text-white' 
-                : 'text-gray-700 hover:bg-gray-100'
-            }`
-          }
+        <Link 
+          to="/contact?bug=true" 
+          className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-gray-700 hover:bg-gray-100"
         >
           <Bug size={18} />
           <span>Report Bug</span>
-        </NavLink>
+        </Link>
       </nav>
       
       <div className="mt-6 pt-6 border-t border-gray-200">
