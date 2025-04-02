@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { City } from '@/types/city';
@@ -186,6 +187,20 @@ const Cities = () => {
     citiesByState[city.state].push(city);
   });
   
+  // Create an array of state entries sorted alphabetically
+  const sortedStateEntries = Object.entries(citiesByState)
+    .sort(([stateA], [stateB]) => stateA.localeCompare(stateB));
+  
+  // Calculate how many states to put in each column
+  const statesPerColumn = Math.ceil(sortedStateEntries.length / 3);
+  
+  // Split the states into 3 columns
+  const columns = [
+    sortedStateEntries.slice(0, statesPerColumn),
+    sortedStateEntries.slice(statesPerColumn, statesPerColumn * 2),
+    sortedStateEntries.slice(statesPerColumn * 2)
+  ];
+  
   return (
     <div className="bg-clickprop-bg-light min-h-screen">
       <div className="bg-clickprop-blue py-10">
@@ -225,27 +240,31 @@ const Cities = () => {
             All Cities by State
           </h2>
           
-          <div className="space-y-8">
-            {Object.entries(citiesByState).sort(([a], [b]) => a.localeCompare(b)).map(([state, cities]) => (
-              <div key={state}>
-                <h3 className="text-xl font-semibold text-clickprop-blue mb-4">{state}</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {cities.map(city => (
-                    <Link 
-                      key={city.id}
-                      to={`/cities/${city.name}`}
-                      className="flex items-center space-x-2 p-2 hover:bg-clickprop-bg-gray rounded"
-                    >
-                      <Building size={16} className="text-clickprop-blue" />
-                      <div>
-                        <span className="text-clickprop-text">{city.name}</span>
-                        <span className="text-xs text-clickprop-text-secondary ml-2">
-                          ({city.propertyCount})
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {columns.map((columnStates, columnIndex) => (
+              <div key={columnIndex} className="space-y-8">
+                {columnStates.map(([state, cities]) => (
+                  <div key={state}>
+                    <h3 className="text-xl font-semibold text-clickprop-blue mb-4">{state}</h3>
+                    <div className="grid grid-cols-1 gap-2">
+                      {cities.map(city => (
+                        <Link 
+                          key={city.id}
+                          to={`/cities/${city.name}`}
+                          className="flex items-center space-x-2 p-2 hover:bg-clickprop-bg-gray rounded"
+                        >
+                          <Building size={16} className="text-clickprop-blue" />
+                          <div>
+                            <span className="text-clickprop-text">{city.name}</span>
+                            <span className="text-xs text-clickprop-text-secondary ml-2">
+                              ({city.propertyCount})
+                            </span>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
