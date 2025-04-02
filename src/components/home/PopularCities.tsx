@@ -1,49 +1,36 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import CityCard from './CityCard';
 import { City } from '@/types/city';
-
-// Mock data for popular cities
-const popularCities: City[] = [
-  {
-    id: '1',
-    name: 'Mumbai',
-    state: 'Maharashtra',
-    propertyCount: 2356,
-    searchCount: 5420,
-    isActive: true,
-    image: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    id: '2',
-    name: 'Delhi',
-    state: 'Delhi',
-    propertyCount: 1897,
-    searchCount: 4980,
-    isActive: true,
-    image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    id: '3',
-    name: 'Bangalore',
-    state: 'Karnataka',
-    propertyCount: 2145,
-    searchCount: 5120,
-    isActive: true,
-    image: 'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?q=80&w=800&auto=format&fit=crop'
-  },
-  {
-    id: '4',
-    name: 'Hyderabad',
-    state: 'Telangana',
-    propertyCount: 1756,
-    searchCount: 3890,
-    isActive: true,
-    image: 'https://images.unsplash.com/photo-1572920629925-9e1cc7517fb7?q=80&w=800&auto=format&fit=crop'
-  }
-];
+import { getPopularCities } from '@/services/cityService';
+import { useToast } from '@/components/ui/use-toast';
 
 const PopularCities = () => {
+  const [cities, setCities] = useState<City[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        setLoading(true);
+        const response = await getPopularCities();
+        setCities(response.data);
+      } catch (error) {
+        console.error('Error fetching popular cities:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load popular cities',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCities();
+  }, [toast]);
+
   return (
     <section className="py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,11 +43,17 @@ const PopularCities = () => {
           </a>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {popularCities.map((city) => (
-            <CityCard key={city.id} city={city} />
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {cities.map((city) => (
+              <CityCard key={city.id} city={city} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
