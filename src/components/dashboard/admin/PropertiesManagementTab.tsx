@@ -13,7 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
 
 const dummyProperties = [
@@ -92,6 +92,7 @@ const PropertiesManagementTab = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   
   // Commented out API calls
   /*
@@ -131,7 +132,10 @@ const PropertiesManagementTab = () => {
 
   const handleDeleteProperty = (id: string) => {
     // Simulate delete operation
-    toast.success('Property deleted successfully');
+    toast({
+      title: "Success",
+      description: "Property deleted successfully",
+    });
     // deleteMutation.mutate(id);
   };
 
@@ -163,7 +167,10 @@ const PropertiesManagementTab = () => {
 
   const handleNotifyUsers = () => {
     // Simulate notification
-    toast.success(`Notified users about ${selectedProperties.length} properties`);
+    toast({
+      title: "Success",
+      description: `Notified users about ${selectedProperties.length} properties`,
+    });
     setSelectedProperties([]);
     /*
     if (selectedProperties.length > 0) {
