@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import PropertyList from '../properties/PropertyList';
 import { Property } from '@/types/property';
@@ -26,9 +25,9 @@ const dummyFeaturedProperties: Property[] = [
     amenities: ['24/7 Access', 'Conference Room', 'Parking'],
     features: ['High-speed Internet', 'Power Backup', 'Reception Area'],
     images: ['https://images.unsplash.com/photo-1497366754035-f200968a6e72'],
+    externalLink: 'https://example.com/property/4',
     isActive: true,
-    views: 130,
-    featured: true
+    views: 130
   },
   {
     id: '5',
@@ -49,9 +48,9 @@ const dummyFeaturedProperties: Property[] = [
     amenities: ['Terrace Garden', 'Private Elevator', 'Swimming Pool'],
     features: ['Italian Marble', 'Smart Home', 'Panoramic View'],
     images: ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750'],
+    externalLink: 'https://example.com/property/5',
     isActive: true,
-    views: 280,
-    featured: true
+    views: 280
   },
   {
     id: '6',
@@ -72,9 +71,9 @@ const dummyFeaturedProperties: Property[] = [
     amenities: ['Private Beach Access', 'Swimming Pool', 'Garden'],
     features: ['Sea View', 'Furnished', 'Party Area'],
     images: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914'],
+    externalLink: 'https://example.com/property/6',
     isActive: true,
-    views: 210,
-    featured: true
+    views: 210
   }
 ];
 

@@ -26,6 +26,7 @@ const dummyLatestProperties: Property[] = [
     amenities: ['Swimming Pool', 'Gym', 'Club House'],
     features: ['Spacious Balcony', 'Modular Kitchen', 'Power Backup'],
     images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2'],
+    externalLink: 'https://example.com/property/1',
     isActive: true,
     views: 120
   },
@@ -48,6 +49,7 @@ const dummyLatestProperties: Property[] = [
     amenities: ['Private Garden', 'Swimming Pool', 'Security'],
     features: ['Italian Marble', 'Smart Home', 'Home Theater'],
     images: ['https://images.unsplash.com/photo-1564013799919-ab600027ffc6'],
+    externalLink: 'https://example.com/property/2',
     isActive: true,
     views: 250
   },
@@ -70,6 +72,7 @@ const dummyLatestProperties: Property[] = [
     amenities: ['Parking', 'Garden', 'Security'],
     features: ['Semi-furnished', 'Lake View', 'Near Metro'],
     images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267'],
+    externalLink: 'https://example.com/property/3',
     isActive: true,
     views: 180
   }
