@@ -55,7 +55,7 @@ const SearchBar = ({ className }: { className?: string }) => {
     <form onSubmit={handleSearch} className={`bg-white p-4 rounded-lg shadow-md ${className}`}>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="col-span-1 md:col-span-2">
-          <label htmlFor="location" className="block text-sm font-medium text-clickprop-text-secondary mb-1">
+          <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
             Location
           </label>
           <Input
@@ -69,11 +69,11 @@ const SearchBar = ({ className }: { className?: string }) => {
         </div>
         
         <div className="col-span-1">
-          <label htmlFor="property-type" className="block text-sm font-medium text-clickprop-text-secondary mb-1">
+          <label htmlFor="property-type" className="block text-sm font-medium text-gray-700 mb-1">
             Property Type
           </label>
           <Select value={propertyType} onValueChange={setPropertyType}>
-            <SelectTrigger id="property-type">
+            <SelectTrigger id="property-type" className="bg-white">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
             <SelectContent>
@@ -89,11 +89,11 @@ const SearchBar = ({ className }: { className?: string }) => {
         </div>
         
         <div className="col-span-1">
-          <label htmlFor="status" className="block text-sm font-medium text-clickprop-text-secondary mb-1">
+          <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
             For
           </label>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger id="status">
+            <SelectTrigger id="status" className="bg-white">
               <SelectValue placeholder="Buy or Rent" />
             </SelectTrigger>
             <SelectContent>
