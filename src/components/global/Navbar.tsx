@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, Home, Search, Building } from 'lucide-react';
+import { Menu, X, User, Home, Building } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,10 +30,6 @@ const Navbar = () => {
             <Link to="/properties" className="px-3 py-2 text-clickprop-text-secondary hover:text-clickprop-blue flex items-center space-x-1">
               <Building size={18} />
               <span>Properties</span>
-            </Link>
-            <Link to="/search" className="px-3 py-2 text-clickprop-text-secondary hover:text-clickprop-blue flex items-center space-x-1">
-              <Search size={18} />
-              <span>Search</span>
             </Link>
             <div className="ml-4 flex items-center space-x-2">
               <Button variant="outline" size="sm" asChild>
@@ -67,10 +63,6 @@ const Navbar = () => {
           <Link to="/properties" className="block px-3 py-2 text-clickprop-text-secondary hover:text-clickprop-blue flex items-center space-x-2">
             <Building size={18} />
             <span>Properties</span>
-          </Link>
-          <Link to="/search" className="block px-3 py-2 text-clickprop-text-secondary hover:text-clickprop-blue flex items-center space-x-2">
-            <Search size={18} />
-            <span>Search</span>
           </Link>
           <div className="flex flex-col space-y-2 mt-3 px-3">
             <Button variant="outline" className="w-full justify-center" asChild>
