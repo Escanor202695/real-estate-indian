@@ -11,7 +11,12 @@ exports.getProperties = async (req, res) => {
     const { location, type, status, minPrice, maxPrice, bedrooms } = req.query;
     
     if (location) {
-      filter['location.city'] = { $regex: location, $options: 'i' };
+      // Use regex for partial matches on city, address, or project name
+      filter['$or'] = [
+        { 'location.city': { $regex: location, $options: 'i' } },
+        { 'location.address': { $regex: location, $options: 'i' } },
+        { 'title': { $regex: location, $options: 'i' } }
+      ];
       
       // Increment search count for the city
       await City.findOneAndUpdate(

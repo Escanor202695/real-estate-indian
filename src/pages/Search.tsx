@@ -174,10 +174,14 @@ const Search = () => {
         const typeParam = params.get('type');
         const statusParam = params.get('status');
         
-        // Check location (city or address)
-        if (locationParam && !property.location.city.toLowerCase().includes(locationParam.toLowerCase()) && 
-            !property.location.address.toLowerCase().includes(locationParam.toLowerCase())) {
-          return false;
+        // Check location (city or address) with regex for partial matches
+        if (locationParam) {
+          const locationRegex = new RegExp(locationParam, 'i');
+          if (!locationRegex.test(property.location.city) && 
+              !locationRegex.test(property.location.address) &&
+              !locationRegex.test(property.title)) {
+            return false;
+          }
         }
         
         // Check property type
@@ -277,7 +281,6 @@ const Search = () => {
         
         <PropertyList properties={currentProperties} loading={loading} />
         
-        {/* Improved pagination container with clear visual boundaries */}
         {properties.length > 0 && (
           <div className="flex justify-center mt-10 pt-6 border-t border-clickprop-border">
             <PropertiesPagination 
