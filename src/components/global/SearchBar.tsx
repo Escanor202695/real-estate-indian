@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ const SearchBar = ({ className }: { className?: string }) => {
   const [status, setStatus] = useState("all");
 
   useEffect(() => {
-    if (location.pathname === '/search') {
+    if (location.pathname === '/properties') {
       const params = new URLSearchParams(location.search);
       const locationParam = params.get('location');
       const typeParam = params.get('type');
@@ -47,7 +48,7 @@ const SearchBar = ({ className }: { className?: string }) => {
     if (propertyType !== 'all') params.append('type', propertyType);
     if (status !== 'all') params.append('status', status);
     
-    navigate(`/search?${params.toString()}`);
+    navigate(`/properties?${params.toString()}`);
   };
 
   return (

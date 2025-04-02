@@ -10,7 +10,6 @@ import Footer from "@/components/global/Footer";
 // Pages
 import Index from "./pages/Index";
 import Properties from "./pages/Properties";
-import Search from "./pages/Search";
 import Cities from "./pages/Cities";
 import CityDetail from "./pages/CityDetail";
 import Login from "./pages/Login";
@@ -31,7 +30,6 @@ const App = () => (
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/properties" element={<Properties />} />
-              <Route path="/search" element={<Search />} />
               <Route path="/cities" element={<Cities />} />
               <Route path="/cities/:name" element={<CityDetail />} />
               <Route path="/login" element={<Login />} />
