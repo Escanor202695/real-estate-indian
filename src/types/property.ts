@@ -22,6 +22,7 @@ export interface Property {
   amenities: string[];
   features: string[];
   images: string[]; // URLs
+  externalLink: string; // URL to external property listing
   owner?: {
     name: string;
     contact: string;

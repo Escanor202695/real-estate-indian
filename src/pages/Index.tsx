@@ -3,7 +3,7 @@ import React from 'react';
 import HeroSection from '@/components/home/HeroSection';
 import PopularCities from '@/components/home/PopularCities';
 import PropertyTypeSection from '@/components/home/PropertyTypeSection';
-import FeaturedProperties from '@/components/home/FeaturedProperties';
+import LatestProperties from '@/components/home/LatestProperties';
 
 const Index = () => {
   return (
@@ -11,7 +11,7 @@ const Index = () => {
       <HeroSection />
       <PopularCities />
       <PropertyTypeSection />
-      <FeaturedProperties />
+      <LatestProperties />
       
       {/* Info Section */}
       <section className="py-16 bg-clickprop-bg-gray">

@@ -6,6 +6,7 @@ const {
   createProperty, 
   updateProperty, 
   deleteProperty,
+  getLatestProperties,
   getFeaturedProperties,
   importProperties
 } = require('../controllers/properties');
@@ -14,6 +15,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
+router.route('/latest').get(getLatestProperties);
 router.route('/featured').get(getFeaturedProperties);
 router.route('/import').post(protect, authorize('admin'), importProperties);
 

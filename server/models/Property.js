@@ -62,6 +62,10 @@ const PropertySchema = new mongoose.Schema({
   amenities: [String],
   features: [String],
   images: [String],
+  externalLink: {
+    type: String,
+    required: true
+  },
   owner: {
     name: String,
     contact: String,
