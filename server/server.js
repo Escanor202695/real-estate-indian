@@ -14,6 +14,8 @@ connectDB();
 const propertyRoutes = require('./routes/properties');
 const cityRoutes = require('./routes/cities');
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
@@ -25,6 +27,8 @@ app.use(cors());
 app.use('/api/properties', propertyRoutes);
 app.use('/api/cities', cityRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Basic route
 app.get('/', (req, res) => {

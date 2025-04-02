@@ -1,14 +1,33 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, Home, Building } from 'lucide-react';
+import { Menu, X, User, Home, Building, UserCircle, Settings } from 'lucide-react';
+import { isLoggedIn, isAdmin, logout } from '@/services/authService';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { toast } from 'sonner';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [userLoggedIn, setUserLoggedIn] = useState(false);
+  const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setUserLoggedIn(isLoggedIn());
+    setUserIsAdmin(isAdmin());
+  }, []);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setUserLoggedIn(false);
+    setUserIsAdmin(false);
+    toast.success('Logged out successfully');
+    navigate('/');
   };
 
   return (
@@ -31,14 +50,52 @@ const Navbar = () => {
               <Building size={18} />
               <span>Properties</span>
             </Link>
-            <div className="ml-4 flex items-center space-x-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/login">Login</Link>
-              </Button>
-              <Button size="sm" className="bg-clickprop-blue hover:bg-clickprop-blue-dark" asChild>
-                <Link to="/signup">Sign Up</Link>
-              </Button>
-            </div>
+            
+            {userLoggedIn ? (
+              <div className="ml-4 flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <UserCircle size={18} />
+                      <span>My Account</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard">
+                        <UserCircle className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                    
+                    {userIsAdmin && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin">
+                          <Settings className="h-4 w-4 mr-2" />
+                          Admin Panel
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ) : (
+              <div className="ml-4 flex items-center space-x-2">
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/login">Login</Link>
+                </Button>
+                <Button size="sm" className="bg-clickprop-blue hover:bg-clickprop-blue-dark" asChild>
+                  <Link to="/signup">Sign Up</Link>
+                </Button>
+              </div>
+            )}
           </div>
           
           {/* Mobile menu button */}
@@ -64,14 +121,39 @@ const Navbar = () => {
             <Building size={18} />
             <span>Properties</span>
           </Link>
-          <div className="flex flex-col space-y-2 mt-3 px-3">
-            <Button variant="outline" className="w-full justify-center" asChild>
-              <Link to="/login">Login</Link>
-            </Button>
-            <Button className="w-full justify-center bg-clickprop-blue hover:bg-clickprop-blue-dark" asChild>
-              <Link to="/signup">Sign Up</Link>
-            </Button>
-          </div>
+          
+          {userLoggedIn ? (
+            <>
+              <Link to="/dashboard" className="block px-3 py-2 text-clickprop-text-secondary hover:text-clickprop-blue flex items-center space-x-2">
+                <UserCircle size={18} />
+                <span>Dashboard</span>
+              </Link>
+              
+              {userIsAdmin && (
+                <Link to="/admin" className="block px-3 py-2 text-clickprop-text-secondary hover:text-clickprop-blue flex items-center space-x-2">
+                  <Settings size={18} />
+                  <span>Admin Panel</span>
+                </Link>
+              )}
+              
+              <Button 
+                variant="outline" 
+                className="w-full justify-center mt-2" 
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+            </>
+          ) : (
+            <div className="flex flex-col space-y-2 mt-3 px-3">
+              <Button variant="outline" className="w-full justify-center" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button className="w-full justify-center bg-clickprop-blue hover:bg-clickprop-blue-dark" asChild>
+                <Link to="/signup">Sign Up</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </nav>

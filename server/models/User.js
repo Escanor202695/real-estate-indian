@@ -24,6 +24,18 @@ const UserSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  location: {
+    city: String,
+    state: String
+  },
+  lastLogin: {
+    type: Date,
+    default: Date.now
+  },
   createdAt: {
     type: Date,
     default: Date.now
