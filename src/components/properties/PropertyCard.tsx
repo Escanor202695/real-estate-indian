@@ -15,6 +15,17 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
     }
   };
 
+  // Function to format price with Indian number format
+  const formatIndianPrice = (price: number) => {
+    if (price >= 10000000) {
+      return `₹${(price / 10000000).toFixed(2)} Cr`;
+    } else if (price >= 100000) {
+      return `₹${(price / 100000).toFixed(2)} Lac`;
+    } else {
+      return `₹${price.toLocaleString()}`;
+    }
+  };
+
   return (
     <Card 
       className="property-card h-full cursor-pointer hover:shadow-md transition-shadow duration-200"
@@ -35,9 +46,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
         </p>
         
         <p className="font-bold text-clickprop-blue mb-3">
-          ₹{property.status === 'rent' 
-            ? `${property.price?.toLocaleString()}/month` 
-            : property.price?.toLocaleString()
+          {property.status === 'rent' 
+            ? `${formatIndianPrice(property.price)}/month` 
+            : formatIndianPrice(property.price)
           }
         </p>
         
