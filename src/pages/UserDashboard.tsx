@@ -5,9 +5,11 @@ import { getCurrentUser } from '@/services/authService';
 import { Outlet, useLocation } from 'react-router-dom';
 import UserSidebar from '@/components/dashboard/user/UserSidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
 
 const UserDashboard = () => {
   const location = useLocation();
+  const { toast } = useToast();
   
   const { data, isLoading, error } = useQuery({
     queryKey: ['currentUser'],
@@ -27,6 +29,14 @@ const UserDashboard = () => {
           state: 'NY'
         }
       }
+    },
+    onError: () => {
+      toast({
+        title: "Connection Error",
+        description: "Using demo data instead of live data.",
+        variant: "default"
+      });
+      console.log("Using demo data - API connection failed");
     }
   });
 
