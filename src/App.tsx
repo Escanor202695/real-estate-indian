@@ -16,6 +16,21 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 
+// Dashboard Pages
+import UserDashboard from "./pages/UserDashboard";
+import Profile from "./pages/dashboard/user/Profile";
+import SavedSearches from "./pages/dashboard/user/SavedSearches";
+import RecentSearches from "./pages/dashboard/user/RecentSearches";
+import PropertyAlerts from "./pages/dashboard/user/PropertyAlerts";
+import ChangePassword from "./pages/dashboard/user/ChangePassword";
+
+// Admin Pages
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminDashboardHome from "./pages/dashboard/admin/Dashboard";
+import AdminProperties from "./pages/dashboard/admin/Properties";
+import AdminUsers from "./pages/dashboard/admin/Users";
+import AdminCities from "./pages/dashboard/admin/Cities";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -34,6 +49,24 @@ const App = () => (
               <Route path="/cities/:name" element={<CityDetail />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              
+              {/* User Dashboard Routes */}
+              <Route path="/dashboard" element={<UserDashboard />}>
+                <Route index element={<Profile />} />
+                <Route path="saved-searches" element={<SavedSearches />} />
+                <Route path="recent-searches" element={<RecentSearches />} />
+                <Route path="alerts" element={<PropertyAlerts />} />
+                <Route path="password" element={<ChangePassword />} />
+              </Route>
+              
+              {/* Admin Dashboard Routes */}
+              <Route path="/admin" element={<AdminDashboard />}>
+                <Route index element={<AdminDashboardHome />} />
+                <Route path="properties" element={<AdminProperties />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="cities" element={<AdminCities />} />
+              </Route>
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
