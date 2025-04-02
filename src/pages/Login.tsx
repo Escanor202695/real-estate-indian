@@ -6,12 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { login } from '@/services/authService';
+import { login, googleLogin } from '@/services/authService';
 
 const Login = () => {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -20,7 +21,7 @@ const Login = () => {
     setIsLoading(true);
     
     try {
-      const response = await login({ email, password });
+      await login({ email, password });
       
       toast({
         title: "Login successful",
@@ -40,24 +41,28 @@ const Login = () => {
     }
   };
   
-  const handleGoogleLogin = () => {
-    // This would integrate with your actual OAuth implementation
-    toast({
-      title: "Google Authentication",
-      description: "Google authentication will be implemented with a proper OAuth flow.",
-    });
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
     
-    // For demo purposes, we'll simulate a successful login
-    setTimeout(() => {
-      localStorage.setItem('token', 'google-demo-token');
-      localStorage.setItem('user', JSON.stringify({
-        _id: 'google-user-123',
-        name: 'Google User',
-        email: 'google.user@example.com',
-        role: 'user'
-      }));
+    try {
+      await googleLogin();
+      
+      toast({
+        title: "Google login successful",
+        description: "Welcome to ClickProp!",
+      });
+      
       navigate('/dashboard');
-    }, 1000);
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast({
+        title: "Google login failed",
+        description: "Could not authenticate with Google. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
   
   return (
@@ -142,6 +147,7 @@ const Login = () => {
                 variant="outline" 
                 className="w-full"
                 onClick={handleGoogleLogin}
+                disabled={isGoogleLoading}
               >
                 <svg
                   className="h-5 w-5 mr-2"
@@ -151,7 +157,7 @@ const Login = () => {
                 >
                   <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032 c0-3.331,2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2 C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
                 </svg>
-                Google
+                {isGoogleLoading ? 'Signing in with Google...' : 'Google'}
               </Button>
             </div>
           </div>
