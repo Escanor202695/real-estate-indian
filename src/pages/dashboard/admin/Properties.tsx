@@ -94,9 +94,6 @@ const Properties = () => {
               <p className="text-sm text-muted-foreground mb-2">
                 Upload a JSON file containing property data to import multiple properties at once.
               </p>
-              <p className="text-xs text-muted-foreground">
-                The JSON file should contain an array of property objects.
-              </p>
             </div>
             <div className="flex items-center gap-2">
               <Button
