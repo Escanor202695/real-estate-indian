@@ -277,16 +277,16 @@ const Search = () => {
         
         <PropertyList properties={currentProperties} loading={loading} />
         
-        {/* Ensure pagination is visible with a more prominent container */}
-        <div className="flex justify-center mt-8 border-t pt-6">
-          {properties.length > 0 && (
+        {/* Improved pagination container with clear visual boundaries */}
+        {properties.length > 0 && (
+          <div className="flex justify-center mt-10 pt-6 border-t border-clickprop-border">
             <PropertiesPagination 
               currentPage={currentPage}
               totalPages={totalPages}
               onPageChange={handlePageChange}
             />
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
