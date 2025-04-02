@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 232 59% 45%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -35,19 +36,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -96,6 +90,56 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-inter;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-poppins font-semibold;
+  }
+}
+
+@layer components {
+  .property-card {
+    @apply rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 bg-white h-full flex flex-col;
+  }
+  
+  .property-image-container {
+    @apply relative h-48 overflow-hidden;
+  }
+  
+  .property-status {
+    @apply absolute top-2 right-2 bg-clickprop-blue text-white px-2 py-1 rounded-md text-xs font-semibold;
+  }
+  
+  .property-content {
+    @apply p-4 flex flex-col flex-grow;
+  }
+  
+  .property-title {
+    @apply text-lg font-semibold mb-1 text-clickprop-text;
+  }
+  
+  .property-price {
+    @apply text-xl font-bold text-clickprop-blue mb-2;
+  }
+  
+  .property-location {
+    @apply text-sm text-clickprop-text-secondary mb-3;
+  }
+  
+  .property-details {
+    @apply flex justify-between text-sm text-clickprop-text-secondary mt-auto;
+  }
+  
+  .hero-section {
+    @apply relative bg-gradient-to-r from-clickprop-blue-dark to-clickprop-blue text-white py-16 md:py-24;
+  }
+  
+  .city-card {
+    @apply rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 relative;
+  }
+  
+  .city-card-overlay {
+    @apply absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4 text-white;
   }
 }
