@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -17,6 +16,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { toast } from 'sonner';
+import { sendEmail } from '@/services/emailService';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -60,8 +60,42 @@ const Contact = () => {
 
   const onSubmit = async (data: ContactFormValues) => {
     try {
-      // In a real app, we would send this data to an API
       console.log('Form submitted:', data);
+      
+      // Send email using our email service
+      await sendEmail({
+        to: "support@clickprop.com", // This would typically be a support email address
+        subject: data.isBugReport ? `Bug Report: ${data.subject}` : data.subject,
+        body: `
+          Name: ${data.name}
+          Email: ${data.email}
+          
+          Message:
+          ${data.message}
+        `,
+        isHtml: false
+      });
+      
+      // Send confirmation email to the user
+      await sendEmail({
+        to: data.email,
+        subject: data.isBugReport ? 
+          "Your Bug Report Has Been Received" : 
+          "Thank You for Contacting ClickProp",
+        body: `
+          <p>Dear ${data.name},</p>
+          
+          <p>Thank you for ${data.isBugReport ? 'reporting a bug' : 'contacting us'}. We have received your message and will get back to you as soon as possible.</p>
+          
+          <p><strong>Your message details:</strong></p>
+          <p>Subject: ${data.subject}</p>
+          <p>Message: ${data.message}</p>
+          
+          <p>Best regards,</p>
+          <p>The ClickProp Team</p>
+        `,
+        isHtml: true
+      });
       
       // For demo purposes, we'll just show a success message
       toast.success(

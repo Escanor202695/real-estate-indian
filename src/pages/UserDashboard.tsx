@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/authService';
 import { Outlet, useLocation } from 'react-router-dom';
 import UserSidebar from '@/components/dashboard/user/UserSidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import { sendNotificationEmail } from '@/services/emailService';
 
 const UserDashboard = () => {
   const location = useLocation();
@@ -41,6 +42,35 @@ const UserDashboard = () => {
       }
     }
   });
+
+  // Add effect to check for new notifications
+  useEffect(() => {
+    // This would normally be implemented with websockets or periodic polling
+    // For demo purposes, we'll simulate a new notification after 5 seconds on dashboard load
+    if (!isLoading && data?.data && location.pathname === '/dashboard') {
+      const timer = setTimeout(() => {
+        const newNotification = {
+          message: "New property matching your search criteria is now available!",
+          type: "property_alert"
+        };
+        
+        // Send email notification
+        sendNotificationEmail(data.data._id, newNotification)
+          .then(() => {
+            toast({
+              title: "Email Notification Sent",
+              description: "An email notification has been sent to your registered email address.",
+              variant: "default"
+            });
+          })
+          .catch((err) => {
+            console.error("Failed to send email notification:", err);
+          });
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, data?.data, location.pathname, toast]);
 
   if (isLoading) {
     return (
