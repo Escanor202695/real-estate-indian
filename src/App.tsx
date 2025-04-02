@@ -15,6 +15,7 @@ import CityDetail from "./pages/CityDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import Contact from "./pages/Contact";
 
 // Dashboard Pages
 import UserDashboard from "./pages/UserDashboard";
@@ -49,6 +50,7 @@ const App = () => (
               <Route path="/cities/:name" element={<CityDetail />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+              <Route path="/contact" element={<Contact />} />
               
               {/* User Dashboard Routes */}
               <Route path="/dashboard" element={<UserDashboard />}>
