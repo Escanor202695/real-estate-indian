@@ -75,7 +75,7 @@ const PropertiesPagination: React.FC<PropertiesPaginationProps> = ({
 
   return (
     <Pagination className="mt-8">
-      <PaginationContent>
+      <PaginationContent className="bg-white shadow-sm rounded-md py-2 px-1">
         {/* Previous button */}
         {currentPage > 1 && (
           <PaginationItem>
