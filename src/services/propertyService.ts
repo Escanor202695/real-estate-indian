@@ -38,7 +38,37 @@ export const deleteProperty = async (id: string) => {
 };
 
 export const importProperties = async (propertiesData: Partial<Property>[]) => {
-  // Send the array directly - the backend expects the array in the request body
-  const response = await api.post('/properties/import', propertiesData);
+  // Debug log to see what's being sent
+  console.log('Sending properties data:', propertiesData);
+  
+  // Make sure properties have all required fields before sending
+  const validatedProperties = propertiesData.map(property => {
+    // Ensure location object exists
+    if (!property.location) {
+      property.location = {
+        address: property.location?.address || 'Unknown',
+        city: property.location?.city || 'Unknown',
+        state: property.location?.state || 'Unknown',
+        pincode: property.location?.pincode || ''
+      };
+    }
+    
+    // Ensure all required fields have at least default values
+    return {
+      ...property,
+      title: property.title || 'Untitled Property',
+      description: property.description || 'No description provided',
+      type: property.type || 'flat',
+      status: property.status || 'sale',
+      price: property.price || 0,
+      size: property.size || 0,
+      bedrooms: property.bedrooms || 0,
+      bathrooms: property.bathrooms || 0,
+      externalLink: property.externalLink || '#',
+      images: property.images || []
+    };
+  });
+  
+  const response = await api.post('/properties/import', validatedProperties);
   return response.data;
 };

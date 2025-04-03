@@ -35,13 +35,24 @@ const Properties = () => {
           return;
         }
 
-        // Send the data directly to the API without wrapping it
-        importProperties(jsonData)
+        console.log("Properties to import:", jsonData);
+
+        // Validate properties have minimum required fields
+        const validProperties = jsonData.filter(property => 
+          property.title && property.type && 
+          property.status && property.price !== undefined);
+
+        if (validProperties.length < jsonData.length) {
+          console.warn(`${jsonData.length - validProperties.length} properties were filtered out due to missing required fields`);
+        }
+
+        // Send the data to the API
+        importProperties(validProperties)
           .then((response) => {
             console.log("Import response:", response);
             toast({
               title: "Upload successful",
-              description: `${jsonData.length} properties imported successfully`,
+              description: `${response.count || validProperties.length} properties imported successfully`,
             });
             queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
             
@@ -52,9 +63,17 @@ const Properties = () => {
           })
           .catch((error) => {
             console.error("Import error:", error);
+            let errorMessage = "Failed to import properties";
+            
+            if (error.response && error.response.data && error.response.data.message) {
+              errorMessage += `: ${error.response.data.message}`;
+            } else if (error.message) {
+              errorMessage += `: ${error.message}`;
+            }
+            
             toast({
               title: "Upload failed",
-              description: `Failed to import properties: ${error.message}`,
+              description: errorMessage,
               variant: "destructive",
             });
           })
