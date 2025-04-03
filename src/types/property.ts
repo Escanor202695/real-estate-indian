@@ -13,7 +13,7 @@ export interface Property {
     address: string;
     city: string;
     state: string;
-    pincode: string;
+    pincode?: string; // Made optional to match server model
     coordinates?: {
       lat: number;
       lng: number;

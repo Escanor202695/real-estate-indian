@@ -40,6 +40,7 @@ export const deleteProperty = async (id: string) => {
 export const importProperties = async (propertiesData: Partial<Property>[]) => {
   // Debug log to see what's being sent
   console.log('Importing properties data. Count:', propertiesData.length);
+  console.log('Sample property:', propertiesData[0]);
   
   // Transform the imported JSON format to match our database schema
   const transformedProperties = propertiesData.map(property => {
@@ -50,6 +51,26 @@ export const importProperties = async (propertiesData: Partial<Property>[]) => {
       if (!isNaN(lat) && !isNaN(lng)) {
         coordinates = { lat, lng };
       }
+    }
+    
+    // Extract state from address if present
+    let state = 'Unknown';
+    let address = property.address || 'Unknown';
+    
+    if (address && address.includes(',')) {
+      const parts = address.split(',');
+      if (parts.length > 1) {
+        state = parts[parts.length - 1].trim();
+      }
+    }
+    
+    // Process landmark details into features
+    let features = [];
+    if (property.landmark_details && Array.isArray(property.landmark_details)) {
+      features = property.landmark_details.map(detail => {
+        const parts = detail.split('|');
+        return parts.length > 1 ? parts[1] : detail;
+      });
     }
     
     // Build a properly formatted property object
@@ -63,14 +84,14 @@ export const importProperties = async (propertiesData: Partial<Property>[]) => {
       bedrooms: property.bedrooms || 0,
       bathrooms: property.bathrooms || 0,
       location: {
-        address: property.address || 'Unknown',
-        city: property.city_name || (typeof property.location === 'object' ? property.location.city : 'Unknown'),
-        state: typeof property.location === 'object' ? property.location.state : 'Unknown',
-        pincode: typeof property.location === 'object' ? property.location.pincode : '',
+        address: address,
+        city: property.city_name || (typeof property.location === 'object' && property.location?.city) || 'Unknown',
+        state: state,
+        pincode: '', // Setting empty string as pincode is now optional
         coordinates: coordinates
       },
       amenities: property.amenities || [],
-      features: property.landmark_details || [],
+      features: features,
       images: property.image_url ? [property.image_url] : (property.images || []),
       externalLink: property.url || property.from_url || property.externalLink || '#',
       owner: property.owner_name ? {
@@ -84,14 +105,27 @@ export const importProperties = async (propertiesData: Partial<Property>[]) => {
     };
   });
   
-  console.log('Transformed properties example:', transformedProperties[0]);
+  console.log('Transformed sample property:', transformedProperties[0]);
   
-  const response = await api.post('/properties/import', transformedProperties);
-  return response.data;
+  try {
+    const response = await api.post('/properties/import', transformedProperties);
+    return response.data;
+  } catch (error) {
+    console.error('Import API error:', error);
+    if (error.response && error.response.data) {
+      console.error('Server error details:', error.response.data);
+    }
+    throw error;
+  }
 };
 
 // Helper function to map property type from imported data
 function mapPropertyType(property: any): string {
+  // First check if the property already has a valid type
+  if (property.type && ['flat', 'villa', 'house', 'plot', 'commercial', 'pg'].includes(property.type)) {
+    return property.type;
+  }
+  
   const title = (property.name || property.title || '').toLowerCase();
   
   if (title.includes('apartment') || title.includes('flat')) {
@@ -106,6 +140,11 @@ function mapPropertyType(property: any): string {
     return 'commercial';
   } else if (title.includes('pg') || title.includes('hostel')) {
     return 'pg';
+  }
+  
+  // If the title contains "BHK", it's likely a flat
+  if (title.includes('bhk')) {
+    return 'flat';
   }
   
   return 'flat'; // Default to flat if no match found
