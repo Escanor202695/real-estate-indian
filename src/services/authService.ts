@@ -1,4 +1,3 @@
-
 import api from './api';
 
 interface RegisterData {
@@ -32,7 +31,6 @@ export const login = async (userData: LoginData) => {
 };
 
 export const googleLogin = async () => {
-  // Open Google OAuth popup
   const googleAuthUrl = `${api.defaults.baseURL}/auth/google`;
   const width = 500;
   const height = 600;
@@ -46,12 +44,10 @@ export const googleLogin = async () => {
   );
   
   return new Promise((resolve, reject) => {
-    // Poll for popup window to close
     const pollTimer = window.setInterval(() => {
       if (popup && popup.closed) {
         window.clearInterval(pollTimer);
         
-        // Check localStorage for tokens set by the server via redirect
         const token = localStorage.getItem('token');
         const user = localStorage.getItem('user');
         
@@ -63,7 +59,6 @@ export const googleLogin = async () => {
       }
     }, 500);
     
-    // Set timeout to clear interval after 2 minutes
     setTimeout(() => {
       window.clearInterval(pollTimer);
       if (popup) popup.close();
@@ -72,19 +67,27 @@ export const googleLogin = async () => {
   });
 };
 
+export const requestPasswordReset = async (email: string) => {
+  const response = await api.post('/auth/forgot-password', { email });
+  return response.data;
+};
+
+export const resetPassword = async (token: string, newPassword: string) => {
+  const response = await api.post('/auth/reset-password', { token, newPassword });
+  return response.data;
+};
+
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
 };
 
 export const getCurrentUser = async () => {
-  // Try to get user from API, but provide fallback dummy data if it fails
   try {
     const response = await api.get('/auth/me');
     return response.data;
   } catch (error) {
     console.log('Using dummy user data instead of API call');
-    // Return dummy user data similar to the API response structure
     return {
       success: true,
       data: {

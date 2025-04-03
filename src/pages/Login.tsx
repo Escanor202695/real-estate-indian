@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -97,12 +96,12 @@ const Login = () => {
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <a
-                  href="#"
+                <Link
+                  to="/forgot-password"
                   className="text-sm font-medium text-clickprop-blue hover:underline"
                 >
                   Forgot your password?
-                </a>
+                </Link>
               </div>
               <Input
                 id="password"
