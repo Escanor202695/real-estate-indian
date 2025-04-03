@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,7 +18,6 @@ import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import Contact from "./pages/Contact";
-import AuthCallback from './pages/AuthCallback';
 
 // Dashboard Pages
 import UserDashboard from "./pages/UserDashboard";
@@ -74,7 +72,6 @@ const App = () => {
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/contact" element={<Contact />} />
-                  <Route path="/auth-callback" element={<AuthCallback />} />
                   
                   {/* Protected User Dashboard Routes */}
                   <Route path="/dashboard" element={

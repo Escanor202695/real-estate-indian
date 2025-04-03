@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -6,7 +7,7 @@ import * as z from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { register as registerUser, googleLogin } from '@/services/authService';
+import { register as registerUser } from '@/services/authService';
 import {
   Form,
   FormControl,
@@ -43,7 +44,7 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 const Signup = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -91,29 +92,29 @@ const Signup = () => {
     }
   };
   
-  const handleGoogleSignup = async () => {
-    setIsGoogleLoading(true);
+  // const handleGoogleSignup = async () => {
+  //   setIsGoogleLoading(true);
     
-    try {
-      await googleLogin();
+  //   try {
+  //     await googleLogin();
       
-      toast({
-        title: "Google sign up successful",
-        description: "Welcome to ClickProp! Your account has been created with Google.",
-      });
+  //     toast({
+  //       title: "Google sign up successful",
+  //       description: "Welcome to ClickProp! Your account has been created with Google.",
+  //     });
       
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Google sign up error:', error);
-      toast({
-        title: "Google sign up failed",
-        description: "Could not create account with Google. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
+  //     navigate('/dashboard');
+  //   } catch (error) {
+  //     console.error('Google sign up error:', error);
+  //     toast({
+  //       title: "Google sign up failed",
+  //       description: "Could not create account with Google. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsGoogleLoading(false);
+  //   }
+  // };
   
   return (
     <div className="min-h-screen bg-clickprop-bg-gray flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -246,6 +247,7 @@ const Signup = () => {
             </form>
           </Form>
 
+          {/* Commented out Google signup section
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -277,6 +279,7 @@ const Signup = () => {
               </Button>
             </div>
           </div>
+          */}
         </div>
       </div>
     </div>

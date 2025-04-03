@@ -4,8 +4,8 @@ const {
   register, 
   login, 
   getMe, 
-  googleAuth, 
-  googleCallback,
+  // googleAuth, 
+  // googleCallback,
   forgotPassword,
   resetPassword
 } = require('../controllers/auth');
@@ -16,8 +16,8 @@ const router = express.Router();
 router.post('/register', register);
 router.post('/login', login);
 router.get('/me', protect, getMe);
-router.get('/google', googleAuth);
-router.get('/google/callback', googleCallback);
+// router.get('/google', googleAuth);
+// router.get('/google/callback', googleCallback);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 
