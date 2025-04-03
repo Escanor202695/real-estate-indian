@@ -9,6 +9,7 @@ ClickProp is a comprehensive real estate platform built using the MERN stack (Mo
 - [Installation](#installation)
 - [Environment Variables](#environment-variables)
 - [Running the Application](#running-the-application)
+- [API Documentation](#api-documentation)
 - [Features](#features)
 - [Authentication](#authentication)
 - [Remaining Work](#remaining-work)
@@ -42,18 +43,22 @@ ClickProp is a comprehensive real estate platform built using the MERN stack (Mo
 
 ## Environment Variables
 
-Create a `.env` file in the root directory with the following variables:
+1. Create a `.env` file in the root directory for frontend configuration:
+   ```
+   FRONTEND_URL=http://localhost:3000
+   ```
 
-```
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/clickprop
-JWT_SECRET=your_strong_secret_key_here
-NODE_ENV=development
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-BACKEND_URL=http://localhost:5000
-FRONTEND_URL=http://localhost:3000
-```
+2. Create a `.env` file in the server directory for backend configuration:
+   ```
+   PORT=4000
+   MONGO_URI=mongodb://localhost:27017/clickprop
+   JWT_SECRET=your_strong_secret_key_here
+   NODE_ENV=development
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   BACKEND_URL=http://localhost:4000
+   FRONTEND_URL=http://localhost:3000
+   ```
 
 ### Important Notes about Environment Variables:
 
@@ -65,8 +70,8 @@ FRONTEND_URL=http://localhost:3000
    - Get these by creating a project in the [Google Developer Console](https://console.developers.google.com/)
    - Create OAuth credentials with the following settings:
      - Application type: Web application
-     - Authorized JavaScript origins: `http://localhost:5000`
-     - Authorized redirect URIs: `http://localhost:5000/api/auth/google/callback`
+     - Authorized JavaScript origins: `http://localhost:4000`
+     - Authorized redirect URIs: `http://localhost:4000/api/auth/google/callback`
 
 4. **BACKEND_URL** and **FRONTEND_URL**: URLs for your backend and frontend services.
 
@@ -85,7 +90,18 @@ FRONTEND_URL=http://localhost:3000
 
 3. Access the application:
    - Frontend: [http://localhost:3000](http://localhost:3000)
-   - Backend API: [http://localhost:5000](http://localhost:5000)
+   - Backend API: [http://localhost:4000](http://localhost:4000)
+   - API Documentation: [http://localhost:4000/api-docs](http://localhost:4000/api-docs)
+
+## API Documentation
+
+The API is documented using Swagger. You can access the Swagger UI at [http://localhost:4000/api-docs](http://localhost:4000/api-docs) when the backend server is running.
+
+Use the Swagger UI to:
+- Explore available API endpoints
+- Test API requests directly from the browser
+- Understand request and response formats
+- See required parameters and authentication methods
 
 ## Features
 
