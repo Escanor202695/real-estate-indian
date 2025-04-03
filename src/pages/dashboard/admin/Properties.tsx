@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import PropertiesManagementTab from "@/components/dashboard/admin/PropertiesManagementTab";
 import { Button } from "@/components/ui/button";
@@ -34,30 +35,23 @@ const Properties = () => {
           return;
         }
 
-        // Simulate API call with a timeout
-        setTimeout(() => {
-          toast({
-            title: "Upload successful",
-            description: `${jsonData.length} properties imported successfully`,
-          });
-          setIsUploading(false);
-
-          // Reset the file input
-          if (event.target) {
-            event.target.value = "";
-          }
-        }, 1500);
-
+        // Send the data directly to the API without wrapping it
         importProperties(jsonData)
-          .then(() => {
+          .then((response) => {
+            console.log("Import response:", response);
             toast({
               title: "Upload successful",
               description: `${jsonData.length} properties imported successfully`,
-              variant: "default", // optional, default is "default"
             });
             queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
+            
+            // Reset the file input
+            if (event.target) {
+              event.target.value = "";
+            }
           })
           .catch((error) => {
+            console.error("Import error:", error);
             toast({
               title: "Upload failed",
               description: `Failed to import properties: ${error.message}`,

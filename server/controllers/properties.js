@@ -216,6 +216,9 @@ exports.getFeaturedProperties = async (req, res) => {
 // @access  Private (Admin)
 exports.importProperties = async (req, res) => {
   try {
+    // Log what we're receiving to debug
+    console.log('Import properties request body:', req.body);
+    
     const properties = req.body;
     
     if (!Array.isArray(properties)) {
@@ -225,15 +228,20 @@ exports.importProperties = async (req, res) => {
       });
     }
     
+    console.log(`Attempting to import ${properties.length} properties`);
+    
     const insertedProperties = await Property.insertMany(properties);
+    console.log(`Successfully inserted ${insertedProperties.length} properties`);
     
     // Update city property counts
     for (const property of properties) {
-      await City.findOneAndUpdate(
-        { name: property.location.city },
-        { $inc: { propertyCount: 1 } },
-        { upsert: true, new: true, setDefaultsOnInsert: true }
-      );
+      if (property.location && property.location.city) {
+        await City.findOneAndUpdate(
+          { name: property.location.city },
+          { $inc: { propertyCount: 1 } },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      }
     }
     
     res.status(201).json({
@@ -242,6 +250,7 @@ exports.importProperties = async (req, res) => {
       message: 'Properties imported successfully'
     });
   } catch (err) {
+    console.error('Error importing properties:', err);
     res.status(400).json({
       success: false,
       message: err.message
