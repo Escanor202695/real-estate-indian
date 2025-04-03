@@ -5,14 +5,23 @@ import { getCurrentUser } from '@/services/authService';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import AdminSidebar from '@/components/dashboard/admin/AdminSidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
 
 const AdminDashboard = () => {
   const location = useLocation();
+  const { toast } = useToast();
   
-  // Remove authentication bypass
   const { data, isLoading, error } = useQuery({
     queryKey: ['currentUser'],
-    queryFn: getCurrentUser
+    queryFn: getCurrentUser,
+    retry: 1,
+    onError: () => {
+      toast({
+        title: "Authentication Error",
+        description: "Please log in to access the admin dashboard.",
+        variant: "destructive"
+      });
+    }
   });
 
   if (isLoading) {
@@ -38,6 +47,11 @@ const AdminDashboard = () => {
 
   // Enforce admin role check
   if (data && data.data.role !== 'admin') {
+    toast({
+      title: "Access Denied",
+      description: "You do not have permission to access the admin dashboard.",
+      variant: "destructive"
+    });
     return <Navigate to="/dashboard" replace />;
   }
 

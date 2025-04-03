@@ -1,92 +1,38 @@
 
 import React, { useState } from 'react';
-// import { useQuery } from '@tanstack/react-query';
-// import { getCities } from '@/services/cityService';
+import { useQuery } from '@tanstack/react-query';
+import { getCities } from '@/services/cityService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MapPin, Search, Edit, Plus, BarChart } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-// Dummy data for cities
-const dummyCities = [
-  {
-    _id: 'city1',
-    name: 'Mumbai',
-    state: 'Maharashtra',
-    propertyCount: 152,
-    searchCount: 438
-  },
-  {
-    _id: 'city2',
-    name: 'Bangalore',
-    state: 'Karnataka',
-    propertyCount: 128,
-    searchCount: 356
-  },
-  {
-    _id: 'city3',
-    name: 'Delhi',
-    state: 'Delhi',
-    propertyCount: 110,
-    searchCount: 289
-  },
-  {
-    _id: 'city4',
-    name: 'Hyderabad',
-    state: 'Telangana',
-    propertyCount: 95,
-    searchCount: 243
-  },
-  {
-    _id: 'city5',
-    name: 'Chennai',
-    state: 'Tamil Nadu',
-    propertyCount: 82,
-    searchCount: 198
-  },
-  {
-    _id: 'city6',
-    name: 'Kolkata',
-    state: 'West Bengal',
-    propertyCount: 78,
-    searchCount: 176
-  },
-  {
-    _id: 'city7',
-    name: 'Pune',
-    state: 'Maharashtra',
-    propertyCount: 65,
-    searchCount: 154
-  },
-  {
-    _id: 'city8',
-    name: 'Ahmedabad',
-    state: 'Gujarat',
-    propertyCount: 59,
-    searchCount: 122
-  }
-];
+import { useToast } from '@/components/ui/use-toast';
 
 const CitiesManagementTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { toast } = useToast();
   
-  // Commented out API call
-  /*
   const { data, isLoading, error } = useQuery({
     queryKey: ['adminCities'],
-    queryFn: getCities
+    queryFn: getCities,
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to fetch cities data",
+        variant: "destructive"
+      });
+    }
   });
-  */
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // Client-side filtering is already implemented
   };
 
-  // Use dummy data directly
-  const allCities = dummyCities;
+  // Use data from API
+  const allCities = data?.data || [];
 
   // Filter cities based on search query
   let cities = allCities;
@@ -125,7 +71,11 @@ const CitiesManagementTab = () => {
           </form>
         </div>
         
-        {cities.length === 0 ? (
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+          </div>
+        ) : cities.length === 0 ? (
           <div className="text-center py-8">
             <MapPin className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-lg font-medium text-gray-900">No cities found</h3>

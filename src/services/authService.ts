@@ -45,8 +45,6 @@ export const login = async (userData: LoginData) => {
   return response.data;
 };
 
-// Google auth functions completely removed to avoid any possible errors
-
 export const requestPasswordReset = async (email: string) => {
   try {
     const response = await api.post('/auth/forgot-password', { email });
@@ -84,26 +82,8 @@ export const logout = () => {
 };
 
 export const getCurrentUser = async () => {
-  try {
-    const response = await api.get('/auth/me');
-    return response.data;
-  } catch (error) {
-    console.log('Using dummy user data instead of API call');
-    return {
-      success: true,
-      data: {
-        _id: 'dummy-user-123',
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '555-123-4567',
-        role: 'user',
-        location: {
-          city: 'New York',
-          state: 'NY'
-        }
-      }
-    };
-  }
+  const response = await api.get('/auth/me');
+  return response.data;
 };
 
 export const isLoggedIn = () => {
