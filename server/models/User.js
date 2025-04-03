@@ -2,6 +2,60 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       required:
+ *         - name
+ *         - email
+ *         - password
+ *       properties:
+ *         _id:
+ *           type: string
+ *           description: User ID
+ *         name:
+ *           type: string
+ *           description: User's full name
+ *         email:
+ *           type: string
+ *           format: email
+ *           description: User's email address
+ *         password:
+ *           type: string
+ *           format: password
+ *           description: User's password
+ *         googleId:
+ *           type: string
+ *           description: Google ID for OAuth users
+ *         phone:
+ *           type: string
+ *           description: User's phone number
+ *         role:
+ *           type: string
+ *           enum: [user, admin]
+ *           description: User role
+ *         isActive:
+ *           type: boolean
+ *           description: Whether the user account is active
+ *         location:
+ *           type: object
+ *           properties:
+ *             city:
+ *               type: string
+ *             state:
+ *               type: string
+ *         lastLogin:
+ *           type: string
+ *           format: date-time
+ *           description: Last login timestamp
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *           description: User creation timestamp
+ */
 const UserSchema = new mongoose.Schema({
   name: {
     type: String,
