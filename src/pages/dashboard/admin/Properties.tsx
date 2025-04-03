@@ -36,23 +36,20 @@ const Properties = () => {
         }
 
         console.log("Properties to import:", jsonData);
+        console.log("First property example:", jsonData[0]);
 
-        // Validate properties have minimum required fields
-        const validProperties = jsonData.filter(property => 
-          property.title && property.type && 
-          property.status && property.price !== undefined);
-
-        if (validProperties.length < jsonData.length) {
-          console.warn(`${jsonData.length - validProperties.length} properties were filtered out due to missing required fields`);
-        }
+        toast({
+          title: "Processing data",
+          description: `Preparing ${jsonData.length} properties for import...`,
+        });
 
         // Send the data to the API
-        importProperties(validProperties)
+        importProperties(jsonData)
           .then((response) => {
             console.log("Import response:", response);
             toast({
               title: "Upload successful",
-              description: `${response.count || validProperties.length} properties imported successfully`,
+              description: `${response.count || response.data?.length || 'All'} properties imported successfully`,
             });
             queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
             
@@ -116,6 +113,10 @@ const Properties = () => {
               <p className="text-sm text-muted-foreground mb-2">
                 Upload a JSON file containing property data to import multiple
                 properties at once.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                The JSON file should contain an array of property objects with the following fields: 
+                name/title, description, price, bedrooms, bathrooms, location, etc.
               </p>
             </div>
             <div className="flex items-center gap-2">

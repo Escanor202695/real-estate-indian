@@ -217,24 +217,51 @@ exports.getFeaturedProperties = async (req, res) => {
 exports.importProperties = async (req, res) => {
   try {
     // Log what we're receiving to debug
-    console.log('Import properties request body:', req.body);
+    console.log('Import properties request body type:', typeof req.body);
+    console.log('Is array:', Array.isArray(req.body));
+    console.log('Number of properties:', Array.isArray(req.body) ? req.body.length : 'Not an array');
     
-    const properties = req.body;
-    
-    if (!Array.isArray(properties)) {
+    // Ensure we have an array of properties
+    if (!Array.isArray(req.body)) {
       return res.status(400).json({
         success: false,
         message: 'Please provide an array of properties'
       });
     }
     
-    console.log(`Attempting to import ${properties.length} properties`);
+    const properties = req.body;
     
-    const insertedProperties = await Property.insertMany(properties);
+    if (properties.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Empty properties array provided'
+      });
+    }
+    
+    // Validate required fields for each property
+    const validProperties = properties.filter(property => {
+      return property.title && 
+             property.type && 
+             property.status && 
+             property.location && 
+             typeof property.price === 'number';
+    });
+    
+    console.log(`${validProperties.length} out of ${properties.length} properties are valid`);
+    
+    if (validProperties.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'None of the properties have all required fields'
+      });
+    }
+    
+    // Insert properties into the database
+    const insertedProperties = await Property.insertMany(validProperties);
     console.log(`Successfully inserted ${insertedProperties.length} properties`);
     
     // Update city property counts
-    for (const property of properties) {
+    for (const property of insertedProperties) {
       if (property.location && property.location.city) {
         await City.findOneAndUpdate(
           { name: property.location.city },
@@ -247,13 +274,24 @@ exports.importProperties = async (req, res) => {
     res.status(201).json({
       success: true,
       count: insertedProperties.length,
-      message: 'Properties imported successfully'
+      message: `${insertedProperties.length} properties imported successfully`
     });
   } catch (err) {
     console.error('Error importing properties:', err);
+    
+    // Provide more detailed error information
+    let errorMessage = 'Server Error';
+    if (err.name === 'ValidationError') {
+      errorMessage = Object.values(err.errors).map(val => val.message).join(', ');
+    } else if (err.code === 11000) {
+      errorMessage = 'Duplicate key error. Some properties may already exist in the database.';
+    } else {
+      errorMessage = err.message;
+    }
+    
     res.status(400).json({
       success: false,
-      message: err.message
+      message: errorMessage
     });
   }
 };
