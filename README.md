@@ -102,6 +102,21 @@ Use the Swagger UI to:
 - Test API requests directly from the browser
 - Understand request and response formats
 - See required parameters and authentication methods
+- Execute API calls with your JWT token
+
+The Swagger documentation is organized by tags:
+- **Authentication**: Register, login, and user management endpoints
+- **Properties**: Property listing, creation, and management endpoints
+- **Cities**: City information and property search by city
+- **User Preferences**: User-specific settings like saved searches
+- **Admin**: Administrative endpoints for system management
+
+To use authenticated endpoints in Swagger UI:
+1. First execute a login request to get your JWT token
+2. Click the "Authorize" button at the top of the page
+3. Enter your token in the format: `Bearer your_token_here`
+4. Click "Authorize" and close the modal
+5. Now you can execute authenticated requests
 
 ## Features
 
