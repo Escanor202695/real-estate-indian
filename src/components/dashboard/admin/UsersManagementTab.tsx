@@ -1,5 +1,7 @@
 
 import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getUsers, deleteUser, updateUser } from '@/services/adminService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -12,93 +14,53 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 
-// Dummy data for users
-const dummyUsers = [
-  {
-    _id: 'user1',
-    name: 'Rahul Sharma',
-    email: 'rahul.sharma@example.com',
-    role: 'user',
-    status: 'active',
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    savedProperties: 12,
-    searches: 45
-  },
-  {
-    _id: 'user2',
-    name: 'Priya Patel',
-    email: 'priya.patel@example.com',
-    role: 'user',
-    status: 'active',
-    createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-    savedProperties: 5,
-    searches: 27
-  },
-  {
-    _id: 'user3',
-    name: 'Vikram Singh',
-    email: 'vikram.singh@example.com',
-    role: 'admin',
-    status: 'active',
-    createdAt: new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString(),
-    savedProperties: 3,
-    searches: 15
-  },
-  {
-    _id: 'user4',
-    name: 'Ananya Desai',
-    email: 'ananya.desai@example.com',
-    role: 'user',
-    status: 'inactive',
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    savedProperties: 0,
-    searches: 8
-  },
-  {
-    _id: 'user5',
-    name: 'Arjun Nair',
-    email: 'arjun.nair@example.com',
-    role: 'user',
-    status: 'active',
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    savedProperties: 7,
-    searches: 32
-  },
-  {
-    _id: 'user6',
-    name: 'Sneha Reddy',
-    email: 'sneha.reddy@example.com',
-    role: 'user',
-    status: 'pending',
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    savedProperties: 0,
-    searches: 3
-  }
-];
-
 const UsersManagementTab = () => {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  // Fetch users
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['adminUsers'],
+    queryFn: getUsers,
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to fetch users data",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Delete user mutation
+  const deleteMutation = useMutation({
+    mutationFn: deleteUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      toast({
+        title: "Success",
+        description: "User deleted successfully"
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleDeleteUser = (id: string) => {
-    // Simulate delete operation
-    toast({
-      title: "Success",
-      description: "User deleted successfully",
-    });
+    deleteMutation.mutate(id);
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate search
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
+    // Client-side filtering is handled below
   };
 
   const handleSelectUser = (id: string) => {
@@ -118,33 +80,38 @@ const UsersManagementTab = () => {
   };
 
   const handleSendEmails = () => {
-    // Simulate email sending
+    // This will be implemented in a future feature
     toast({
-      title: "Success",
-      description: `Emails sent to ${selectedUsers.length} users`,
+      title: "Information",
+      description: `Email feature will be available in the next update`
     });
     setSelectedUsers([]);
   };
 
-  // Apply filtering to dummy data
-  let filteredUsers = dummyUsers;
+  // Get users from API response
+  const allUsers = data?.data || [];
+  
+  // Apply filtering
+  let filteredUsers = allUsers;
   
   if (searchQuery) {
-    filteredUsers = filteredUsers.filter(user => 
-      user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    filteredUsers = filteredUsers.filter((user: any) => 
+      user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }
   
   if (selectedRole !== 'all') {
-    filteredUsers = filteredUsers.filter(user => 
+    filteredUsers = filteredUsers.filter((user: any) => 
       user.role === selectedRole
     );
   }
   
   if (selectedStatus !== 'all') {
-    filteredUsers = filteredUsers.filter(user => 
-      user.status === selectedStatus
+    filteredUsers = filteredUsers.filter((user: any) => 
+      (selectedStatus === 'active' && user.isActive) ||
+      (selectedStatus === 'inactive' && !user.isActive) ||
+      (selectedStatus === 'pending' && user.status === 'pending')
     );
   }
 
@@ -226,7 +193,7 @@ const UsersManagementTab = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
             <p className="mt-2">Loading users...</p>
           </div>
-        ) : users.length === 0 ? (
+        ) : error || users.length === 0 ? (
           <div className="text-center py-8">
             <User className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-lg font-medium text-gray-900">No users found</h3>
@@ -256,7 +223,7 @@ const UsersManagementTab = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
+                {users.map((user: any) => (
                   <TableRow key={user._id}>
                     <TableCell>
                       <Checkbox 
@@ -275,17 +242,17 @@ const UsersManagementTab = () => {
                       <Badge 
                         variant="outline" 
                         className={
-                          user.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' : 
-                          user.status === 'inactive' ? 'bg-red-50 text-red-700 border-red-200' :
+                          user.isActive ? 'bg-green-50 text-green-700 border-green-200' : 
+                          !user.isActive ? 'bg-red-50 text-red-700 border-red-200' :
                           'bg-yellow-50 text-yellow-700 border-yellow-200'
                         }
                       >
-                        {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                        {user.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
-                    <TableCell>{formatDistanceToNow(new Date(user.createdAt), { addSuffix: true })}</TableCell>
-                    <TableCell>{user.savedProperties}</TableCell>
-                    <TableCell>{user.searches}</TableCell>
+                    <TableCell>{user.createdAt ? formatDistanceToNow(new Date(user.createdAt), { addSuffix: true }) : 'N/A'}</TableCell>
+                    <TableCell>{user.preferences?.savedProperties?.length || 0}</TableCell>
+                    <TableCell>{user.preferences?.savedSearches?.length || 0}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button size="sm" variant="outline">

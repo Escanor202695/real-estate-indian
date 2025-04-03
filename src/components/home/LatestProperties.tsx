@@ -4,6 +4,7 @@ import PropertyList from '../properties/PropertyList';
 import { Property } from '@/types/property';
 import { getLatestProperties } from '@/services/propertyService';
 import { useToast } from '@/components/ui/use-toast';
+import { Link } from 'react-router-dom';
 
 const LatestProperties = () => {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -15,7 +16,12 @@ const LatestProperties = () => {
       try {
         setLoading(true);
         const response = await getLatestProperties();
-        setProperties(response.data);
+        
+        if (response && response.data) {
+          setProperties(response.data);
+        } else {
+          setProperties([]);
+        }
       } catch (error) {
         console.error('Error fetching latest properties:', error);
         toast({
@@ -39,9 +45,9 @@ const LatestProperties = () => {
           <h2 className="text-2xl md:text-3xl font-bold text-clickprop-text">
             Latest Properties
           </h2>
-          <a href="/properties" className="text-clickprop-blue hover:underline">
+          <Link to="/properties" className="text-clickprop-blue hover:underline">
             View All Properties
-          </a>
+          </Link>
         </div>
         
         <PropertyList properties={properties} loading={loading} />

@@ -4,6 +4,7 @@ import PropertyList from '../properties/PropertyList';
 import { Property } from '@/types/property';
 import { getFeaturedProperties } from '@/services/propertyService';
 import { useToast } from '@/components/ui/use-toast';
+import { Link } from 'react-router-dom';
 
 const FeaturedProperties = () => {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -15,7 +16,12 @@ const FeaturedProperties = () => {
       try {
         setLoading(true);
         const response = await getFeaturedProperties();
-        setProperties(response.data);
+        
+        if (response && response.data) {
+          setProperties(response.data);
+        } else {
+          setProperties([]);
+        }
       } catch (error) {
         console.error('Error fetching featured properties:', error);
         toast({
@@ -39,9 +45,9 @@ const FeaturedProperties = () => {
           <h2 className="text-2xl md:text-3xl font-bold text-clickprop-text">
             Featured Properties
           </h2>
-          <a href="/properties" className="text-clickprop-blue hover:underline">
+          <Link to="/properties" className="text-clickprop-blue hover:underline">
             View All Properties
-          </a>
+          </Link>
         </div>
         
         <PropertyList properties={properties} loading={loading} />
