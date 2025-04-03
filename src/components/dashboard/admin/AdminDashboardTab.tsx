@@ -1,48 +1,100 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Home, Users, ArrowUp, TrendingDown, TrendingUp, Eye } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-
-// Dummy data for dashboard stats
-const dashboardStats = {
-  totalProperties: 235,
-  activeProperties: 187,
-  totalUsers: 423,
-  totalCities: 12,
-  propertiesViewsTotal: 12453,
-  propertiesViewsLastMonth: 1876,
-  propertyViewsChange: 12.4, // percentage
-  newUsersThisMonth: 42,
-  newUsersLastMonth: 38,
-  newUsersChange: 10.5, // percentage
-  popularCities: [
-    { name: 'Mumbai', count: 78 },
-    { name: 'Bangalore', count: 65 },
-    { name: 'Delhi', count: 54 },
-    { name: 'Hyderabad', count: 43 },
-    { name: 'Chennai', count: 36 },
-    { name: 'Pune', count: 29 },
-  ],
-  recentPropertyViews: [
-    { date: 'Jan', count: 345 },
-    { date: 'Feb', count: 421 },
-    { date: 'Mar', count: 384 },
-    { date: 'Apr', count: 507 },
-    { date: 'May', count: 578 },
-    { date: 'Jun', count: 624 },
-    { date: 'Jul', count: 687 },
-    { date: 'Aug', count: 752 },
-    { date: 'Sep', count: 798 },
-    { date: 'Oct', count: 845 },
-    { date: 'Nov', count: 934 },
-    { date: 'Dec', count: 1020 },
-  ],
-};
+import { useQuery } from '@tanstack/react-query';
+import { getAdminStats } from '@/services/adminService';
+import { useToast } from '@/components/ui/use-toast';
 
 const AdminDashboardTab = () => {
-  // Using dummy data instead of API calls
-  const stats = dashboardStats;
+  const { toast } = useToast();
+  
+  const { data: statsData, isLoading, error } = useQuery({
+    queryKey: ['adminStats'],
+    queryFn: getAdminStats,
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard statistics",
+        variant: "destructive"
+      });
+    }
+  });
+
+  // Format data for charts
+  const popularCities = statsData?.data?.cityStats?.topByPropertyCount?.map(city => ({
+    name: city.name,
+    count: city.propertyCount || 0
+  })) || [];
+
+  // We'll use property views data from the API in the future
+  // For now, create a placeholder with months
+  const propertyViewsData = [
+    { date: 'Jan', count: 0 },
+    { date: 'Feb', count: 0 },
+    { date: 'Mar', count: 0 },
+    { date: 'Apr', count: 0 },
+    { date: 'May', count: 0 },
+    { date: 'Jun', count: 0 },
+    { date: 'Jul', count: 0 },
+    { date: 'Aug', count: 0 },
+    { date: 'Sep', count: 0 },
+    { date: 'Oct', count: 0 },
+    { date: 'Nov', count: 0 },
+    { date: 'Dec', count: 0 },
+  ].map((item, index) => {
+    const views = statsData?.data?.propertyStats?.viewsByMonth?.[index]?.count || 0;
+    return {
+      ...item,
+      count: views
+    };
+  });
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-16 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div className="h-4 w-32 bg-gray-200 rounded animate-pulse"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[1, 2].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <div className="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
+                <div className="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[300px] bg-gray-100 rounded animate-pulse"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !statsData) {
+    return (
+      <div className="p-8 text-center">
+        <h3 className="text-lg font-medium">Failed to load dashboard data</h3>
+        <p className="text-gray-500 mt-2">Please try refreshing the page</p>
+      </div>
+    );
+  }
+
+  const stats = statsData.data;
   
   return (
     <div className="space-y-6">
@@ -54,9 +106,9 @@ const AdminDashboardTab = () => {
             <Building className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProperties}</div>
+            <div className="text-2xl font-bold">{stats?.propertyStats?.total || 0}</div>
             <p className="text-xs text-gray-500 mt-1">
-              {stats.activeProperties} active
+              {stats?.propertyStats?.active || 0} active
             </p>
           </CardContent>
         </Card>
@@ -68,10 +120,10 @@ const AdminDashboardTab = () => {
             <Users className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalUsers}</div>
+            <div className="text-2xl font-bold">{stats?.userStats?.total || 0}</div>
             <div className="flex items-center text-xs text-green-500 mt-1">
               <ArrowUp className="h-3 w-3 mr-1" />
-              <span>{stats.newUsersChange}% from last month</span>
+              <span>{stats?.userStats?.newThisMonth || 0} new this month</span>
             </div>
           </CardContent>
         </Card>
@@ -83,7 +135,7 @@ const AdminDashboardTab = () => {
             <Building className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalCities}</div>
+            <div className="text-2xl font-bold">{stats?.cityStats?.total || 0}</div>
             <p className="text-xs text-gray-500 mt-1">
               Cities with active properties
             </p>
@@ -97,10 +149,10 @@ const AdminDashboardTab = () => {
             <Eye className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.propertiesViewsTotal}</div>
+            <div className="text-2xl font-bold">{stats?.propertyStats?.totalViews || 0}</div>
             <div className="flex items-center text-xs text-green-500 mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              <span>{stats.propertyViewsChange}% from last month</span>
+              <span>{stats?.propertyStats?.viewsChangePercent || 0}% from last month</span>
             </div>
           </CardContent>
         </Card>
@@ -115,7 +167,7 @@ const AdminDashboardTab = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={stats.recentPropertyViews}>
+              <BarChart data={propertyViewsData}>
                 <XAxis dataKey="date" />
                 <YAxis />
                 <Tooltip />
@@ -132,7 +184,7 @@ const AdminDashboardTab = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={stats.popularCities} layout="vertical">
+              <BarChart data={popularCities} layout="vertical">
                 <XAxis type="number" />
                 <YAxis dataKey="name" type="category" width={80} />
                 <Tooltip />
@@ -155,18 +207,18 @@ const AdminDashboardTab = () => {
               <div className="flex-1 space-y-1">
                 <div className="flex items-center justify-between">
                   <p className="text-sm">This Month</p>
-                  <p className="font-medium">{stats.newUsersThisMonth}</p>
+                  <p className="font-medium">{stats?.userStats?.newThisMonth || 0}</p>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-sm">Last Month</p>
-                  <p className="font-medium">{stats.newUsersLastMonth}</p>
+                  <p className="font-medium">{stats?.userStats?.newLastMonth || 0}</p>
                 </div>
                 <div className="flex items-center justify-between text-green-500">
                   <p className="text-sm flex items-center">
                     <TrendingUp className="h-3 w-3 mr-1" />
                     Change
                   </p>
-                  <p className="font-medium">+{stats.newUsersChange}%</p>
+                  <p className="font-medium">+{stats?.userStats?.newUsersChangePercent || 0}%</p>
                 </div>
               </div>
             </div>
@@ -183,20 +235,18 @@ const AdminDashboardTab = () => {
               <div className="flex-1 space-y-1">
                 <div className="flex items-center justify-between">
                   <p className="text-sm">This Month</p>
-                  <p className="font-medium">{stats.propertiesViewsLastMonth}</p>
+                  <p className="font-medium">{stats?.propertyStats?.viewsThisMonth || 0}</p>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-sm">Last Month</p>
-                  <p className="font-medium">
-                    {Math.round(stats.propertiesViewsLastMonth / (1 + stats.propertyViewsChange / 100))}
-                  </p>
+                  <p className="font-medium">{stats?.propertyStats?.viewsLastMonth || 0}</p>
                 </div>
                 <div className="flex items-center justify-between text-green-500">
                   <p className="text-sm flex items-center">
                     <TrendingUp className="h-3 w-3 mr-1" />
                     Change
                   </p>
-                  <p className="font-medium">+{stats.propertyViewsChange}%</p>
+                  <p className="font-medium">+{stats?.propertyStats?.viewsChangePercent || 0}%</p>
                 </div>
               </div>
             </div>

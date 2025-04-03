@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-// import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-// import { getProperties, deleteProperty } from '@/services/propertyService';
-// import { notifyUsers } from '@/services/adminService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getProperties, deleteProperty } from '@/services/propertyService';
+import { notifyUsers } from '@/services/adminService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -16,137 +16,81 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
 
-const dummyProperties = [
-  {
-    _id: 'prop1',
-    title: 'Modern Apartment in City Center',
-    type: 'flat',
-    status: 'rent',
-    price: 25000,
-    location: { city: 'Mumbai' },
-    createdAt: new Date().toISOString(),
-    views: 145,
-    images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267']
-  },
-  {
-    _id: 'prop2',
-    title: 'Luxury Villa with Garden',
-    type: 'villa',
-    status: 'sale',
-    price: 9500000,
-    location: { city: 'Bangalore' },
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    views: 324,
-    images: ['https://images.unsplash.com/photo-1580587771525-78b9dba3b914']
-  },
-  {
-    _id: 'prop3',
-    title: 'Commercial Space in Tech Park',
-    type: 'commercial',
-    status: 'rent',
-    price: 150000,
-    location: { city: 'Hyderabad' },
-    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-    views: 78,
-    images: []
-  },
-  {
-    _id: 'prop4',
-    title: '3BHK Independent House',
-    type: 'house',
-    status: 'sale',
-    price: 4500000,
-    location: { city: 'Delhi' },
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    views: 256,
-    images: ['https://images.unsplash.com/photo-1568605114967-8130f3a36994']
-  },
-  {
-    _id: 'prop5',
-    title: 'Premium Office Space',
-    type: 'commercial',
-    status: 'rent',
-    price: 180000,
-    location: { city: 'Gurgaon' },
-    createdAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
-    views: 112,
-    images: ['https://images.unsplash.com/photo-1497366811353-6870744d04b2']
-  },
-  {
-    _id: 'prop6',
-    title: '2BHK Flat in Suburban Area',
-    type: 'flat',
-    status: 'rent',
-    price: 18000,
-    location: { city: 'Pune' },
-    createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
-    views: 198,
-    images: ['https://images.unsplash.com/photo-1493809842364-78817add7ffb']
-  }
-];
-
 const PropertiesManagementTab = () => {
-  // const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  // Commented out API calls
-  /*
+  // Build query params for API call
+  const buildQueryParams = () => {
+    const params: any = {};
+    if (searchQuery) params.search = searchQuery;
+    if (selectedType !== 'all') params.type = selectedType;
+    if (selectedStatus !== 'all') params.status = selectedStatus;
+    return params;
+  };
+  
+  // Fetch properties data
   const { data, isLoading, error } = useQuery({
     queryKey: ['adminProperties', searchQuery, selectedType, selectedStatus],
-    queryFn: () => {
-      const params: any = {};
-      if (searchQuery) params.location = searchQuery;
-      if (selectedType !== 'all') params.type = selectedType;
-      if (selectedStatus !== 'all') params.status = selectedStatus;
-      return getProperties(params);
+    queryFn: () => getProperties(buildQueryParams()),
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to fetch properties data",
+        variant: "destructive"
+      });
     }
   });
 
+  // Delete property mutation
   const deleteMutation = useMutation({
     mutationFn: deleteProperty,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
-      toast.success('Property deleted successfully');
+      toast({
+        title: "Success",
+        description: "Property deleted successfully"
+      });
     },
     onError: () => {
-      toast.error('Failed to delete property');
+      toast({
+        title: "Error",
+        description: "Failed to delete property",
+        variant: "destructive"
+      });
     }
   });
 
+  // Notify users mutation
   const notifyMutation = useMutation({
     mutationFn: (ids: string[]) => notifyUsers(ids),
     onSuccess: (data) => {
-      toast.success(`Notified ${data.data.notifiedUsers.length} users about new properties`);
+      toast({
+        title: "Success",
+        description: `Notified ${data.data.notifiedUsers.length} users about new properties`
+      });
       setSelectedProperties([]);
     },
     onError: () => {
-      toast.error('Failed to send notifications');
+      toast({
+        title: "Error",
+        description: "Failed to send notifications",
+        variant: "destructive"
+      });
     }
   });
-  */
 
   const handleDeleteProperty = (id: string) => {
-    // Simulate delete operation
-    toast({
-      title: "Success",
-      description: "Property deleted successfully",
-    });
-    // deleteMutation.mutate(id);
+    deleteMutation.mutate(id);
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate search
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 500);
-    // queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
+    queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
   };
 
   const handleSelectProperty = (id: string) => {
@@ -166,50 +110,23 @@ const PropertiesManagementTab = () => {
   };
 
   const handleNotifyUsers = () => {
-    // Simulate notification
-    toast({
-      title: "Success",
-      description: `Notified users about ${selectedProperties.length} properties`,
-    });
-    setSelectedProperties([]);
-    /*
     if (selectedProperties.length > 0) {
       notifyMutation.mutate(selectedProperties);
     }
-    */
   };
 
-  // Apply filtering to dummy data
-  let filteredProperties = dummyProperties;
-  
-  if (searchQuery) {
-    filteredProperties = filteredProperties.filter(property => 
-      property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      property.location.city.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }
-  
-  if (selectedType !== 'all') {
-    filteredProperties = filteredProperties.filter(property => 
-      property.type === selectedType
-    );
-  }
-  
-  if (selectedStatus !== 'all') {
-    filteredProperties = filteredProperties.filter(property => 
-      property.status === selectedStatus
-    );
-  }
-
-  const properties = filteredProperties;
+  // Get properties from API response
+  const properties = data?.data || [];
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Properties Management</CardTitle>
-        <Button className="bg-clickprop-blue hover:bg-clickprop-blue-dark">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Property
+        <Button className="bg-clickprop-blue hover:bg-clickprop-blue-dark" asChild>
+          <Link to="/admin/properties/new">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Property
+          </Link>
         </Button>
       </CardHeader>
       <CardContent>
@@ -291,7 +208,7 @@ const PropertiesManagementTab = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
             <p className="mt-2">Loading properties...</p>
           </div>
-        ) : properties.length === 0 ? (
+        ) : error || properties.length === 0 ? (
           <div className="text-center py-8">
             <Home className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-lg font-medium text-gray-900">No properties found</h3>
@@ -364,9 +281,9 @@ const PropertiesManagementTab = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>₹{property.price.toLocaleString()}</TableCell>
-                    <TableCell>{property.location.city}</TableCell>
-                    <TableCell>{formatDistanceToNow(new Date(property.createdAt), { addSuffix: true })}</TableCell>
-                    <TableCell>{property.views}</TableCell>
+                    <TableCell>{property.location?.city || 'N/A'}</TableCell>
+                    <TableCell>{property.createdAt ? formatDistanceToNow(new Date(property.createdAt), { addSuffix: true }) : 'N/A'}</TableCell>
+                    <TableCell>{property.views || 0}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button size="sm" variant="outline" asChild>
@@ -374,8 +291,10 @@ const PropertiesManagementTab = () => {
                             <Search className="h-4 w-4" />
                           </Link>
                         </Button>
-                        <Button size="sm" variant="outline">
-                          <Edit className="h-4 w-4" />
+                        <Button size="sm" variant="outline" asChild>
+                          <Link to={`/admin/properties/edit/${property._id}`}>
+                            <Edit className="h-4 w-4" />
+                          </Link>
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>

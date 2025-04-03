@@ -28,10 +28,10 @@ const CitiesManagementTab = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Client-side filtering is already implemented
+    // Client-side filtering is handled below
   };
 
-  // Use data from API
+  // Get cities from API response
   const allCities = data?.data || [];
 
   // Filter cities based on search query
@@ -75,7 +75,7 @@ const CitiesManagementTab = () => {
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
           </div>
-        ) : cities.length === 0 ? (
+        ) : error || cities.length === 0 ? (
           <div className="text-center py-8">
             <MapPin className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-lg font-medium text-gray-900">No cities found</h3>

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, Home, Building, UserCircle, Settings, LayoutDashboard } from 'lucide-react';
-import { isLoggedIn, isAdmin, logout } from '@/services/authService';
+import { isLoggedIn, isAdmin, logout, getCurrentUser } from '@/services/authService';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
 
@@ -11,11 +11,30 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [userLoggedIn, setUserLoggedIn] = useState(false);
   const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [userName, setUserName] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    setUserLoggedIn(isLoggedIn());
-    setUserIsAdmin(isAdmin());
+    const checkLoginStatus = async () => {
+      const loggedIn = isLoggedIn();
+      setUserLoggedIn(loggedIn);
+
+      if (loggedIn) {
+        setUserIsAdmin(isAdmin());
+        
+        try {
+          // Fetch current user data to get name
+          const response = await getCurrentUser();
+          if (response && response.data) {
+            setUserName(response.data.name || 'User');
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      }
+    };
+
+    checkLoginStatus();
   }, []);
 
   const toggleMenu = () => {
@@ -54,7 +73,7 @@ const Navbar = () => {
             {userIsAdmin && (
               <Link to="/admin" className="px-3 py-2 text-clickprop-text-secondary hover:text-clickprop-blue flex items-center space-x-1">
                 <LayoutDashboard size={18} />
-                <span>Admin</span>
+                <span>Admin Dashboard</span>
               </Link>
             )}
             
@@ -64,7 +83,7 @@ const Navbar = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">
                       <UserCircle size={18} />
-                      <span>My Account</span>
+                      <span>{userName}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
