@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -57,7 +56,7 @@ const Signup = () => {
       email: '',
       phone: '',
       password: '',
-      agreeTerms: false
+      agreeTerms: undefined as unknown as true
     }
   });
 
