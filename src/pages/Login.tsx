@@ -6,14 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { login, googleLogin, getRememberedEmail } from '@/services/authService';
+import { login, getRememberedEmail } from '@/services/authService';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  // const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -51,29 +51,29 @@ const Login = () => {
     }
   };
   
-  const handleGoogleLogin = async () => {
-    setIsGoogleLoading(true);
+  // const handleGoogleLogin = async () => {
+  //   setIsGoogleLoading(true);
     
-    try {
-      await googleLogin();
+  //   try {
+  //     await googleLogin();
       
-      toast({
-        title: "Google login successful",
-        description: "Welcome to ClickProp!",
-      });
+  //     toast({
+  //       title: "Google login successful",
+  //       description: "Welcome to ClickProp!",
+  //     });
       
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Google login error:', error);
-      toast({
-        title: "Google login failed",
-        description: "Could not authenticate with Google. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGoogleLoading(false);
-    }
-  };
+  //     navigate('/dashboard');
+  //   } catch (error) {
+  //     console.error('Google login error:', error);
+  //     toast({
+  //       title: "Google login failed",
+  //       description: "Could not authenticate with Google. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   } finally {
+  //     setIsGoogleLoading(false);
+  //   }
+  // };
   
   return (
     <div className="min-h-screen bg-clickprop-bg-gray flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -144,6 +144,7 @@ const Login = () => {
             </Button>
           </form>
 
+          {/* Commented out Google login section
           <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -175,6 +176,7 @@ const Login = () => {
               </Button>
             </div>
           </div>
+          */}
         </div>
       </div>
     </div>
