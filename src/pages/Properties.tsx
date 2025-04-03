@@ -178,6 +178,7 @@ const Properties = () => {
     const locationParam = params.get('location');
     const typeParam = params.get('type');
     const statusParam = params.get('status');
+    const pageParam = params.get('page');
     
     // Set location from URL or localStorage
     if (locationParam) {
@@ -201,6 +202,11 @@ const Properties = () => {
     } else {
       const savedStatus = localStorage.getItem('searchStatus');
       if (savedStatus) setStatus(savedStatus);
+    }
+    
+    // Set page from URL
+    if (pageParam) {
+      setCurrentPage(parseInt(pageParam, 10));
     }
     
     // Apply filters based on URL params or localStorage
@@ -257,18 +263,21 @@ const Properties = () => {
       });
       
       setProperties(filtered);
-      setCurrentPage(1); // Reset to first page when applying filters
+      if (!isInitialLoad) {
+        setCurrentPage(1); // Reset to first page when applying filters
+      }
       setLoading(false);
     }, 500);
   };
 
-  // Update URL with current filter values
+  // Update URL with current filter values and page
   const updateUrl = () => {
     const params = new URLSearchParams();
     
     if (locationQuery) params.append('location', locationQuery);
     if (propertyType !== 'all') params.append('type', propertyType);
     if (status !== 'all') params.append('status', status);
+    if (currentPage > 1) params.append('page', currentPage.toString());
     
     const newUrl = `/properties?${params.toString()}`;
     navigate(newUrl, { replace: true });
@@ -299,12 +308,20 @@ const Properties = () => {
   // Get current properties based on pagination
   const indexOfLastProperty = currentPage * propertiesPerPage;
   const indexOfFirstProperty = indexOfLastProperty - propertiesPerPage;
-  const currentProperties = properties.slice(indexOfFirstProperty, indexOfLastProperty);
+  const currentProperties = properties.slice(indexOfFirstProperty, indexOfFirstProperty + propertiesPerPage);
   const totalPages = Math.ceil(properties.length / propertiesPerPage);
 
   // Change page
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
+    // Update URL with new page number
+    const params = new URLSearchParams(location.search);
+    if (pageNumber > 1) {
+      params.set('page', pageNumber.toString());
+    } else {
+      params.delete('page');
+    }
+    navigate(`/properties?${params.toString()}`, { replace: true });
     window.scrollTo(0, 0);
   };
   
@@ -489,14 +506,12 @@ const Properties = () => {
             
             <PropertyList properties={currentProperties} loading={loading} />
             
-            {properties.length > 0 && (
-              <div className="flex justify-center mt-8">
-                <PropertiesPagination 
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={handlePageChange}
-                />
-              </div>
+            {totalPages > 0 && (
+              <PropertiesPagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
             )}
           </div>
         </div>
