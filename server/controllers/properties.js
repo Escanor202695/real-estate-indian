@@ -1,4 +1,3 @@
-
 const Property = require('../models/Property');
 const City = require('../models/City');
 
@@ -8,8 +7,9 @@ const City = require('../models/City');
 exports.getProperties = async (req, res) => {
   try {
     const filter = { isActive: true };
-    const { location, type, status, minPrice, maxPrice, bedrooms } = req.query;
+    const { location, type, status, minPrice, maxPrice, bedrooms, page, limit } = req.query;
     
+    // Build filter object
     if (location) {
       // Use regex for partial matches on city, address, or project name
       filter['$or'] = [
@@ -31,14 +31,30 @@ exports.getProperties = async (req, res) => {
     if (maxPrice) filter.price = { ...filter.price, $lte: parseFloat(maxPrice) };
     if (bedrooms) filter.bedrooms = parseInt(bedrooms);
     
-    const properties = await Property.find(filter).select('-__v');
+    // Pagination logic
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+    
+    // Get total count for pagination
+    const totalCount = await Property.countDocuments(filter);
+    
+    // Get paginated properties
+    const properties = await Property.find(filter)
+      .select('-__v')
+      .skip(skip)
+      .limit(limitNum)
+      .sort({ createdAt: -1 });
     
     res.status(200).json({
       success: true,
-      count: properties.length,
-      data: properties
+      count: totalCount,
+      data: properties,
+      page: pageNum,
+      pages: Math.ceil(totalCount / limitNum)
     });
   } catch (err) {
+    console.error('Error fetching properties:', err);
     res.status(500).json({
       success: false,
       message: 'Server Error'
