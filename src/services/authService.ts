@@ -45,42 +45,7 @@ export const login = async (userData: LoginData) => {
   return response.data;
 };
 
-// export const googleLogin = async () => {
-//   const googleAuthUrl = `${api.defaults.baseURL}/auth/google`;
-//   const width = 500;
-//   const height = 600;
-//   const left = window.screen.width / 2 - width / 2;
-//   const top = window.screen.height / 2 - height / 2;
-  
-//   const popup = window.open(
-//     googleAuthUrl,
-//     'Google Authentication',
-//     `width=${width},height=${height},left=${left},top=${top}`
-//   );
-  
-//   return new Promise((resolve, reject) => {
-//     const pollTimer = window.setInterval(() => {
-//       if (popup && popup.closed) {
-//         window.clearInterval(pollTimer);
-        
-//         const token = localStorage.getItem('token');
-//         const user = localStorage.getItem('user');
-        
-//         if (token && user) {
-//           resolve({ token, user: JSON.parse(user) });
-//         } else {
-//           reject(new Error('Google authentication failed'));
-//         }
-//       }
-//     }, 500);
-    
-//     setTimeout(() => {
-//       window.clearInterval(pollTimer);
-//       if (popup) popup.close();
-//       reject(new Error('Google authentication timed out'));
-//     }, 120000);
-//   });
-// };
+// Google auth functions completely removed to avoid any possible errors
 
 export const requestPasswordReset = async (email: string) => {
   try {

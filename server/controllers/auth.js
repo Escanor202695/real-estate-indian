@@ -10,7 +10,7 @@ const bcrypt = require('bcryptjs');
 // passport.use(new GoogleStrategy({
 //   clientID: process.env.GOOGLE_CLIENT_ID,
 //   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-//   callbackURL: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/auth/google/callback`,
+//   callbackURL: `${process.env.BACKEND_URL || 'http://localhost:5173'}/api/auth/google/callback`,
 //   scope: ['profile', 'email']
 // }, async (accessToken, refreshToken, profile, done) => {
 //   try {
@@ -159,44 +159,9 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// @desc    Google OAuth login/register
-// @route   GET /api/auth/google
-// @access  Public
-// exports.googleAuth = passport.authenticate('google', {
-//   scope: ['profile', 'email']
-// });
-
-// @desc    Google OAuth callback
-// @route   GET /api/auth/google/callback
-// @access  Public
-// exports.googleCallback = (req, res, next) => {
-//   passport.authenticate('google', { session: false }, (err, user) => {
-//     if (err) {
-//       return next(err);
-//     }
-//     
-//     if (!user) {
-//       return res.redirect('/login?error=google_auth_failed');
-//     }
-//     
-//     // Generate token
-//     const token = generateToken(user._id);
-//     
-//     // Redirect with token and user data in URL parameters
-//     // The frontend will handle parsing these and setting in localStorage
-//     res.redirect(
-//       `${process.env.FRONTEND_URL || 'http://localhost:3000'}/auth-callback` +
-//       `?token=${token}` +
-//       `&user=${encodeURIComponent(JSON.stringify({
-//         _id: user._id,
-//         name: user.name,
-//         email: user.email,
-//         phone: user.phone,
-//         role: user.role
-//       }))}`
-//     );
-//   })(req, res, next);
-// };
+// Google OAuth Methods - Completely Commented Out
+// exports.googleAuth = (req, res) => { /* Commented out */ };
+// exports.googleCallback = (req, res) => { /* Commented out */ };
 
 // @desc    Forgot password - Generate OTP and send email
 // @route   POST /api/auth/forgot-password
