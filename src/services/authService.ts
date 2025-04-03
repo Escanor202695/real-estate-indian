@@ -1,4 +1,3 @@
-
 import api from './api';
 
 interface RegisterData {
@@ -11,6 +10,7 @@ interface RegisterData {
 interface LoginData {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 interface PasswordResetData {
@@ -33,6 +33,13 @@ export const login = async (userData: LoginData) => {
   if (response.data.token) {
     localStorage.setItem('token', response.data.token);
     localStorage.setItem('user', JSON.stringify(response.data.user));
+
+    // Handle remember me functionality
+    if (userData.rememberMe) {
+      localStorage.setItem('rememberedEmail', userData.email);
+    } else {
+      localStorage.removeItem('rememberedEmail');
+    }
   }
   return response.data;
 };
@@ -100,9 +107,14 @@ export const resetPassword = async (resetData: PasswordResetData) => {
   }
 };
 
+export const getRememberedEmail = (): string | null => {
+  return localStorage.getItem('rememberedEmail');
+};
+
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
+  // Don't remove rememberedEmail as we want it to persist even after logout
 };
 
 export const getCurrentUser = async () => {
