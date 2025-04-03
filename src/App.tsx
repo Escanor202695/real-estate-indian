@@ -15,6 +15,7 @@ import Cities from "./pages/Cities";
 import CityDetail from "./pages/CityDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
 import NotFound from "./pages/NotFound";
 import Contact from "./pages/Contact";
 import AuthCallback from './pages/AuthCallback';
@@ -54,6 +55,7 @@ const App = () => {
                   <Route path="/cities/:name" element={<CityDetail />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/auth-callback" element={<AuthCallback />} />
                   
