@@ -35,8 +35,8 @@ const signupSchema = z.object({
     .min(8, { message: "Password must be at least 8 characters" })
     .regex(/[0-9]/, { message: "Password must contain at least one number" })
     .regex(/[^a-zA-Z0-9]/, { message: "Password must contain at least one special character" }),
-  agreeTerms: z.literal(true, {
-    errorMap: () => ({ message: "You must agree to the Terms of Service and Privacy Policy" })
+  agreeTerms: z.boolean().refine(val => val === true, {
+    message: "You must agree to the Terms of Service and Privacy Policy"
   })
 });
 
