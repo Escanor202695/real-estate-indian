@@ -1,12 +1,11 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser } from '@/services/authService';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import UserSidebar from '@/components/dashboard/user/UserSidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
-import { sendNotificationEmail } from '@/services/emailService';
 
 const UserDashboard = () => {
   const location = useLocation();
@@ -15,64 +14,19 @@ const UserDashboard = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['currentUser'],
     queryFn: getCurrentUser,
-    retry: 1,
-    // Provide fallback dummy user data
-    initialData: {
-      success: true,
-      data: {
-        _id: 'dummy-user-123',
-        name: 'John Doe',
-        email: 'john.doe@example.com',
-        phone: '555-123-4567',
-        role: 'user',
-        location: {
-          city: 'New York',
-          state: 'NY'
-        }
-      }
-    }
+    retry: 1
   });
 
   // Handle query error
-  useEffect(() => {
+  React.useEffect(() => {
     if (error) {
       toast({
-        title: "Connection Error",
-        description: "Using demo data instead of live data.",
-        variant: "default"
+        title: "Authentication Error",
+        description: "Please log in to access the dashboard.",
+        variant: "destructive"
       });
-      console.log("Using demo data - API connection failed");
     }
   }, [error, toast]);
-
-  // Add effect to check for new notifications
-  useEffect(() => {
-    // This would normally be implemented with websockets or periodic polling
-    // For demo purposes, we'll simulate a new notification after 5 seconds on dashboard load
-    if (!isLoading && data?.data && location.pathname === '/dashboard') {
-      const timer = setTimeout(() => {
-        const newNotification = {
-          message: "New property matching your search criteria is now available!",
-          type: "property_alert"
-        };
-        
-        // Send email notification
-        sendNotificationEmail(data.data._id, newNotification)
-          .then(() => {
-            toast({
-              title: "Email Notification Sent",
-              description: "An email notification has been sent to your registered email address.",
-              variant: "default"
-            });
-          })
-          .catch((err) => {
-            console.error("Failed to send email notification:", err);
-          });
-      }, 5000);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, data?.data, location.pathname, toast]);
 
   if (isLoading) {
     return (
@@ -90,7 +44,12 @@ const UserDashboard = () => {
     );
   }
 
-  // Continue with user data even if there's an error by using the initialData
+  // Redirect to login if not authenticated
+  if (error || !data) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Continue with authenticated user data
   const user = data.data;
 
   return (
