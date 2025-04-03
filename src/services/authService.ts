@@ -1,3 +1,4 @@
+
 import api from './api';
 
 interface RegisterData {
@@ -10,6 +11,12 @@ interface RegisterData {
 interface LoginData {
   email: string;
   password: string;
+}
+
+interface PasswordResetData {
+  email: string;
+  otp: string;
+  newPassword: string;
 }
 
 export const register = async (userData: RegisterData) => {
@@ -68,13 +75,29 @@ export const googleLogin = async () => {
 };
 
 export const requestPasswordReset = async (email: string) => {
-  const response = await api.post('/auth/forgot-password', { email });
-  return response.data;
+  try {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error) {
+    console.error('Password reset request error:', error);
+    throw error;
+  }
 };
 
-export const resetPassword = async (token: string, newPassword: string) => {
-  const response = await api.post('/auth/reset-password', { token, newPassword });
-  return response.data;
+export const resetPassword = async (resetData: PasswordResetData) => {
+  try {
+    const response = await api.post('/auth/reset-password', resetData);
+    
+    if (response.data.token) {
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
+    
+    return response.data;
+  } catch (error) {
+    console.error('Password reset error:', error);
+    throw error;
+  }
 };
 
 export const logout = () => {

@@ -31,6 +31,12 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  resetPasswordOtp: {
+    type: String
+  },
+  resetPasswordExpires: {
+    type: Date
+  },
   location: {
     city: String,
     state: String
