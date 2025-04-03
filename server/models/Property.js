@@ -54,7 +54,6 @@ const mongoose = require('mongoose');
  *             - address
  *             - city
  *             - state
- *             - pincode
  *           properties:
  *             address:
  *               type: string
@@ -165,7 +164,7 @@ const PropertySchema = new mongoose.Schema({
     },
     pincode: {
       type: String,
-      required: true
+      required: false
     },
     coordinates: {
       lat: Number,

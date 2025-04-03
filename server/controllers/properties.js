@@ -238,13 +238,31 @@ exports.importProperties = async (req, res) => {
       });
     }
     
+    // Log a sample property for debugging
+    if (properties.length > 0) {
+      console.log('Sample property received:', JSON.stringify(properties[0], null, 2));
+    }
+    
     // Validate required fields for each property
     const validProperties = properties.filter(property => {
-      return property.title && 
-             property.type && 
-             property.status && 
-             property.location && 
-             typeof property.price === 'number';
+      if (!property.title || 
+          !property.type || 
+          !property.status || 
+          !property.location || 
+          typeof property.price !== 'number') {
+        console.log('Invalid property:', property.title || 'unnamed');
+        return false;
+      }
+      
+      // Make sure location has the required fields (except pincode which is now optional)
+      if (!property.location.address || 
+          !property.location.city || 
+          !property.location.state) {
+        console.log('Invalid location:', property.location);
+        return false;
+      }
+      
+      return true;
     });
     
     console.log(`${validProperties.length} out of ${properties.length} properties are valid`);
