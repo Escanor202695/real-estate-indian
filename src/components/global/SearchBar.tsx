@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from 'lucide-react';
+import { addRecentSearch } from '@/services/userService';
 
 const SearchBar = ({ className }: { className?: string }) => {
   const navigate = useNavigate();
@@ -47,6 +48,27 @@ const SearchBar = ({ className }: { className?: string }) => {
     if (locationQuery) params.append('location', locationQuery);
     if (propertyType !== 'all') params.append('type', propertyType);
     if (status !== 'all') params.append('status', status);
+    
+    // Track the search in our system
+    if (locationQuery) {
+      try {
+        // Add to recent searches for logged-in users
+        const searchData = {
+          query: locationQuery,
+          params: {
+            location: locationQuery,
+            type: propertyType !== 'all' ? propertyType : undefined,
+            status: status !== 'all' ? status : undefined
+          },
+          timestamp: new Date().toISOString()
+        };
+        
+        addRecentSearch(searchData)
+          .catch(err => console.log('Error saving recent search:', err));
+      } catch (error) {
+        console.log('Error tracking search:', error);
+      }
+    }
     
     navigate(`/properties?${params.toString()}`);
   };
