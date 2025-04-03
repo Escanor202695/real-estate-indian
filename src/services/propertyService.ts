@@ -38,6 +38,7 @@ export const deleteProperty = async (id: string) => {
 };
 
 export const importProperties = async (propertiesData: Partial<Property>[]) => {
-  const response = await api.post('/properties/import', { properties: propertiesData });
+  // Send the array directly - the backend expects the array in the request body
+  const response = await api.post('/properties/import', propertiesData);
   return response.data;
 };
