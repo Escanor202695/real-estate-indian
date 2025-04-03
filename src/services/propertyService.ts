@@ -1,8 +1,10 @@
-
 import api from './api';
 import { Property } from '@/types/property';
 
 export const getProperties = async (params?: any) => {
+  // Log the params being sent to the API for debugging
+  console.log('Getting properties with params:', params);
+  
   const response = await api.get('/properties', { params });
   return response.data;
 };

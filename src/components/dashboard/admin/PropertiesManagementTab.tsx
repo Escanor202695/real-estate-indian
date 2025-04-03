@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getProperties, deleteProperty } from '@/services/propertyService';
@@ -15,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
 import { Link } from 'react-router-dom';
+import PropertiesPagination from '@/components/properties/PropertiesPagination';
 
 const PropertiesManagementTab = () => {
   const queryClient = useQueryClient();
@@ -22,6 +22,8 @@ const PropertiesManagementTab = () => {
   const [selectedType, setSelectedType] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const { toast } = useToast();
   
   // Build query params for API call
@@ -30,12 +32,14 @@ const PropertiesManagementTab = () => {
     if (searchQuery) params.search = searchQuery;
     if (selectedType !== 'all') params.type = selectedType;
     if (selectedStatus !== 'all') params.status = selectedStatus;
+    params.page = currentPage;
+    params.limit = itemsPerPage;
     return params;
   };
   
   // Fetch properties data
   const { data, isLoading, error } = useQuery({
-    queryKey: ['adminProperties', searchQuery, selectedType, selectedStatus],
+    queryKey: ['adminProperties', searchQuery, selectedType, selectedStatus, currentPage, itemsPerPage],
     queryFn: () => getProperties(buildQueryParams()),
     onError: () => {
       toast({
@@ -90,6 +94,7 @@ const PropertiesManagementTab = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setCurrentPage(1); // Reset to first page on new search
     queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
   };
 
@@ -115,8 +120,15 @@ const PropertiesManagementTab = () => {
     }
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
+
   // Get properties from API response
   const properties = data?.data || [];
+  const totalCount = data?.count || 0;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   return (
     <Card>
@@ -217,120 +229,135 @@ const PropertiesManagementTab = () => {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <Table className="whitespace-nowrap">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[30px]">
-                    <Checkbox 
-                      checked={properties.length > 0 && selectedProperties.length === properties.length}
-                      onCheckedChange={handleSelectAll}
-                    />
-                  </TableHead>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Added</TableHead>
-                  <TableHead>Views</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {properties.map((property: any) => (
-                  <TableRow key={property._id}>
-                    <TableCell>
+          <>
+            <div className="overflow-x-auto">
+              <Table className="whitespace-nowrap">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[30px]">
                       <Checkbox 
-                        checked={selectedProperties.includes(property._id)}
-                        onCheckedChange={() => handleSelectProperty(property._id)}
+                        checked={properties.length > 0 && selectedProperties.length === properties.length}
+                        onCheckedChange={handleSelectAll}
                       />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 bg-gray-200 rounded mr-2">
-                          {property.images && property.images.length > 0 ? (
-                            <img 
-                              src={property.images[0]} 
-                              alt={property.title} 
-                              className="h-10 w-10 object-cover rounded"
-                            />
-                          ) : (
-                            <Home className="h-6 w-6 m-2 text-gray-400" />
-                          )}
-                        </div>
-                        <div className="truncate max-w-[150px]" title={property.title}>
-                          {property.title}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {property.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant="outline" 
-                        className={property.status === 'sale' 
-                          ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                          : 'bg-green-50 text-green-700 border-green-200'
-                        }
-                      >
-                        {property.status === 'sale' ? 'For Sale' : 'For Rent'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>₹{property.price.toLocaleString()}</TableCell>
-                    <TableCell>{property.location?.city || 'N/A'}</TableCell>
-                    <TableCell>{property.createdAt ? formatDistanceToNow(new Date(property.createdAt), { addSuffix: true }) : 'N/A'}</TableCell>
-                    <TableCell>{property.views || 0}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button size="sm" variant="outline" asChild>
-                          <Link to={`/properties/${property._id}`}>
-                            <Search className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <Button size="sm" variant="outline" asChild>
-                          <Link to={`/admin/properties/edit/${property._id}`}>
-                            <Edit className="h-4 w-4" />
-                          </Link>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              className="text-red-500 border-red-200 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete the property.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction 
-                                onClick={() => handleDeleteProperty(property._id)}
-                                className="bg-red-500 hover:bg-red-600"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
+                    </TableHead>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Added</TableHead>
+                    <TableHead>Views</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {properties.map((property: any) => (
+                    <TableRow key={property._id}>
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedProperties.includes(property._id)}
+                          onCheckedChange={() => handleSelectProperty(property._id)}
+                        />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 bg-gray-200 rounded mr-2">
+                            {property.images && property.images.length > 0 ? (
+                              <img 
+                                src={property.images[0]} 
+                                alt={property.title} 
+                                className="h-10 w-10 object-cover rounded"
+                              />
+                            ) : (
+                              <Home className="h-6 w-6 m-2 text-gray-400" />
+                            )}
+                          </div>
+                          <div className="truncate max-w-[150px]" title={property.title}>
+                            {property.title}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {property.type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="outline" 
+                          className={property.status === 'sale' 
+                            ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                            : 'bg-green-50 text-green-700 border-green-200'
+                          }
+                        >
+                          {property.status === 'sale' ? 'For Sale' : 'For Rent'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>₹{property.price.toLocaleString()}</TableCell>
+                      <TableCell>{property.location?.city || 'N/A'}</TableCell>
+                      <TableCell>{property.createdAt ? formatDistanceToNow(new Date(property.createdAt), { addSuffix: true }) : 'N/A'}</TableCell>
+                      <TableCell>{property.views || 0}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button size="sm" variant="outline" asChild>
+                            <Link to={`/properties/${property._id}`}>
+                              <Search className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button size="sm" variant="outline" asChild>
+                            <Link to={`/admin/properties/edit/${property._id}`}>
+                              <Edit className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                className="text-red-500 border-red-200 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the property.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDeleteProperty(property._id)}
+                                  className="bg-red-500 hover:bg-red-600"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="mt-6">
+                <PropertiesPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+                <div className="text-sm text-center text-gray-500 mt-2">
+                  Showing {Math.min((currentPage - 1) * itemsPerPage + 1, totalCount)} to {Math.min(currentPage * itemsPerPage, totalCount)} of {totalCount} properties
+                </div>
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>
