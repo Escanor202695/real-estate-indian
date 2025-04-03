@@ -1,8 +1,9 @@
-
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
+const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 // Configure passport for Google OAuth
 passport.use(new GoogleStrategy({
@@ -194,4 +195,117 @@ exports.googleCallback = (req, res, next) => {
       }))}`
     );
   })(req, res, next);
+};
+
+// @desc    Forgot password - Generate OTP and send email
+// @route   POST /api/auth/forgot-password
+// @access  Public
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Check if user exists
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      // We don't want to reveal if the email exists or not for security reasons
+      return res.status(200).json({
+        success: true,
+        message: 'If your email is registered, you will receive a password reset code'
+      });
+    }
+    
+    // Generate random 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    // Set OTP expiry time (15 minutes from now)
+    const otpExpiry = Date.now() + 15 * 60 * 1000;
+    
+    // Hash the OTP before storing it
+    const salt = await bcrypt.genSalt(10);
+    const hashedOtp = await bcrypt.hash(otp, salt);
+    
+    // Save OTP and expiry to user document
+    user.resetPasswordOtp = hashedOtp;
+    user.resetPasswordExpires = otpExpiry;
+    await user.save();
+    
+    // In a real environment, send email with OTP
+    // For this demo, we'll just console.log the OTP
+    console.log(`Password reset OTP for ${email}: ${otp}`);
+    
+    res.status(200).json({
+      success: true,
+      message: 'If your email is registered, you will receive a password reset code'
+    });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error'
+    });
+  }
+};
+
+// @desc    Verify OTP and reset password
+// @route   POST /api/auth/reset-password
+// @access  Public
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+    
+    // Find user by email
+    const user = await User.findOne({ 
+      email, 
+      resetPasswordExpires: { $gt: Date.now() } 
+    });
+    
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password reset code is invalid or has expired'
+      });
+    }
+    
+    // Verify OTP
+    const isOtpValid = await bcrypt.compare(otp, user.resetPasswordOtp);
+    
+    if (!isOtpValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid code'
+      });
+    }
+    
+    // Set new password
+    user.password = newPassword;
+    
+    // Clear reset password fields
+    user.resetPasswordOtp = undefined;
+    user.resetPasswordExpires = undefined;
+    
+    await user.save();
+    
+    // Generate token for automatic login
+    const token = generateToken(user._id);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Password has been reset successfully',
+      token,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role
+      }
+    });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error'
+    });
+  }
 };
