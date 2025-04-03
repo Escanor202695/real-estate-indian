@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { City } from '@/types/city';
@@ -357,7 +356,7 @@ const Cities = () => {
   
   // Calculate the total count (states + cities)
   const totalCount = sortedStateEntries.reduce(
-    (total, [_, cities]) => total + 1 + cities.length, 0
+    (total, [cities]) => total + 1 + cities.length, 0
   );
   
   // Calculate items per column (roughly equal distribution)
@@ -437,9 +436,6 @@ const Cities = () => {
                           <Building size={16} className="text-clickprop-blue" />
                           <div>
                             <span className="text-clickprop-text">{city.name}</span>
-                            <span className="text-xs text-clickprop-text-secondary ml-2">
-                              ({city.propertyCount})
-                            </span>
                           </div>
                         </Link>
                       ))}
