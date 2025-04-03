@@ -1,37 +1,39 @@
-
-import React, { useState } from 'react';
-import PropertiesManagementTab from '@/components/dashboard/admin/PropertiesManagementTab';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileJson, Upload } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import React, { useState } from "react";
+import PropertiesManagementTab from "@/components/dashboard/admin/PropertiesManagementTab";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileJson, Upload } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { importProperties } from "@/services/propertyService";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Properties = () => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
-    
+
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       try {
         const jsonData = JSON.parse(e.target?.result as string);
-        
+
         if (!Array.isArray(jsonData)) {
           toast({
             title: "Invalid JSON format",
             description: "The JSON file must contain an array of properties",
-            variant: "destructive"
+            variant: "destructive",
           });
           setIsUploading(false);
           return;
         }
-        
+
         // Simulate API call with a timeout
         setTimeout(() => {
           toast({
@@ -39,51 +41,58 @@ const Properties = () => {
             description: `${jsonData.length} properties imported successfully`,
           });
           setIsUploading(false);
-          
+
           // Reset the file input
           if (event.target) {
-            event.target.value = '';
+            event.target.value = "";
           }
         }, 1500);
-        
-        // In a real application, you would call the importProperties API here
-        // importProperties(jsonData)
-        //   .then(() => {
-        //     toast.success(`${jsonData.length} properties imported successfully`);
-        //     queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
-        //   })
-        //   .catch((error) => {
-        //     toast.error(`Failed to import properties: ${error.message}`);
-        //   })
-        //   .finally(() => {
-        //     setIsUploading(false);
-        //   });
+
+        importProperties(jsonData)
+          .then(() => {
+            toast({
+              title: "Upload successful",
+              description: `${jsonData.length} properties imported successfully`,
+              variant: "default", // optional, default is "default"
+            });
+            queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
+          })
+          .catch((error) => {
+            toast({
+              title: "Upload failed",
+              description: `Failed to import properties: ${error.message}`,
+              variant: "destructive",
+            });
+          })
+          .finally(() => {
+            setIsUploading(false);
+          });
       } catch (error) {
         toast({
           title: "Error parsing JSON",
           description: "Please check your file format and try again",
-          variant: "destructive"
+          variant: "destructive",
         });
         setIsUploading(false);
       }
     };
-    
+
     reader.onerror = () => {
       toast({
         title: "Error reading file",
         description: "There was an error reading the file",
-        variant: "destructive"
+        variant: "destructive",
       });
       setIsUploading(false);
     };
-    
+
     reader.readAsText(file);
   };
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Properties Management</h1>
-      
+
       <Card className="mb-6">
         <CardHeader className="pb-3">
           <CardTitle className="text-md">Import Properties</CardTitle>
@@ -92,7 +101,8 @@ const Properties = () => {
           <div className="flex flex-col sm:flex-row gap-4 items-center">
             <div className="flex-1">
               <p className="text-sm text-muted-foreground mb-2">
-                Upload a JSON file containing property data to import multiple properties at once.
+                Upload a JSON file containing property data to import multiple
+                properties at once.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -118,7 +128,7 @@ const Properties = () => {
           </div>
         </CardContent>
       </Card>
-      
+
       <PropertiesManagementTab />
     </div>
   );
