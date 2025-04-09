@@ -8,9 +8,10 @@ const {
   clearRecentSearches,
   updateUserProfile,
   changePassword,
-  deactivateAccount
+  deactivateAccount,
+  processPropertyAlerts
 } = require('../controllers/userPreferences');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -216,5 +217,21 @@ router.delete('/preferences/saved-searches/:id', deleteSavedSearch);
  */
 router.post('/preferences/recent-searches', addRecentSearch);
 router.delete('/preferences/recent-searches', clearRecentSearches);
+
+/**
+ * @swagger
+ * /api/users/process-alerts:
+ *   post:
+ *     summary: Process property alerts for all users
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Alerts processed successfully
+ *       401:
+ *         description: Not authorized
+ */
+router.post('/process-alerts', protect, authorize('admin'), processPropertyAlerts);
 
 module.exports = router;

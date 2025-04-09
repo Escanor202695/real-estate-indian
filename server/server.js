@@ -18,6 +18,7 @@ const cityRoutes = require('./routes/cities');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin');
+const emailRoutes = require('./routes/email');
 
 const app = express();
 
@@ -74,6 +75,7 @@ app.use('/api/cities', cityRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api', emailRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
