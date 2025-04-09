@@ -1,11 +1,16 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from 'lucide-react';
-import { addRecentSearch } from '@/services/userService';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Search } from "lucide-react";
+import { addRecentSearch } from "@/services/userService";
 
 const SearchBar = ({ className }: { className?: string }) => {
   const navigate = useNavigate();
@@ -15,21 +20,20 @@ const SearchBar = ({ className }: { className?: string }) => {
   const [status, setStatus] = useState("all");
 
   useEffect(() => {
-    if (location.pathname === '/properties') {
+    if (location.pathname === "/properties") {
       const params = new URLSearchParams(location.search);
-      const locationParam = params.get('location');
-      const typeParam = params.get('type');
-      const statusParam = params.get('status');
-      
+      const locationParam = params.get("location");
+      const typeParam = params.get("type");
+      const statusParam = params.get("status");
+
       if (locationParam) setLocationQuery(locationParam);
       if (typeParam) setPropertyType(typeParam);
       if (statusParam) setStatus(statusParam);
-    } 
-    else {
-      const savedLocation = localStorage.getItem('searchLocation');
-      const savedType = localStorage.getItem('searchPropertyType');
-      const savedStatus = localStorage.getItem('searchStatus');
-      
+    } else {
+      const savedLocation = localStorage.getItem("searchLocation");
+      const savedType = localStorage.getItem("searchPropertyType");
+      const savedStatus = localStorage.getItem("searchStatus");
+
       if (savedLocation) setLocationQuery(savedLocation);
       if (savedType) setPropertyType(savedType);
       if (savedStatus) setStatus(savedStatus);
@@ -38,17 +42,17 @@ const SearchBar = ({ className }: { className?: string }) => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    localStorage.setItem('searchLocation', locationQuery);
-    localStorage.setItem('searchPropertyType', propertyType);
-    localStorage.setItem('searchStatus', status);
-    
+
+    localStorage.setItem("searchLocation", locationQuery);
+    localStorage.setItem("searchPropertyType", propertyType);
+    localStorage.setItem("searchStatus", status);
+
     const params = new URLSearchParams();
-    
-    if (locationQuery) params.append('location', locationQuery);
-    if (propertyType !== 'all') params.append('type', propertyType);
-    if (status !== 'all') params.append('status', status);
-    
+
+    if (locationQuery) params.append("location", locationQuery);
+    if (propertyType !== "all") params.append("type", propertyType);
+    if (status !== "all") params.append("status", status);
+
     // Track the search in our system
     if (locationQuery) {
       try {
@@ -57,27 +61,34 @@ const SearchBar = ({ className }: { className?: string }) => {
           query: locationQuery,
           params: {
             location: locationQuery,
-            type: propertyType !== 'all' ? propertyType : undefined,
-            status: status !== 'all' ? status : undefined
+            type: propertyType !== "all" ? propertyType : undefined,
+            status: status !== "all" ? status : undefined,
           },
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
-        
-        addRecentSearch(searchData)
-          .catch(err => console.log('Error saving recent search:', err));
+
+        addRecentSearch(searchData).catch((err) =>
+          console.log("Error saving recent search:", err)
+        );
       } catch (error) {
-        console.log('Error tracking search:', error);
+        console.log("Error tracking search:", error);
       }
     }
-    
+
     navigate(`/properties?${params.toString()}`);
   };
 
   return (
-    <form onSubmit={handleSearch} className={`bg-white p-4 rounded-lg shadow-md ${className}`}>
+    <form
+      onSubmit={handleSearch}
+      className={`bg-white p-4 rounded-lg shadow-md ${className}`}
+    >
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="col-span-1 md:col-span-2">
-          <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="location"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Location
           </label>
           <Input
@@ -86,16 +97,19 @@ const SearchBar = ({ className }: { className?: string }) => {
             placeholder="City, Locality or Project"
             value={locationQuery}
             onChange={(e) => setLocationQuery(e.target.value)}
-            className="w-full"
+            className="w-full text-black"
           />
         </div>
-        
+
         <div className="col-span-1">
-          <label htmlFor="property-type" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="property-type"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             Property Type
           </label>
           <Select value={propertyType} onValueChange={setPropertyType}>
-            <SelectTrigger id="property-type" className="bg-white">
+            <SelectTrigger id="property-type" className="bg-white text-black">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
             <SelectContent>
@@ -109,13 +123,16 @@ const SearchBar = ({ className }: { className?: string }) => {
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="col-span-1">
-          <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+          <label
+            htmlFor="status"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
             For
           </label>
           <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger id="status" className="bg-white">
+            <SelectTrigger id="status" className="bg-white text-black">
               <SelectValue placeholder="Buy or Rent" />
             </SelectTrigger>
             <SelectContent>
@@ -125,9 +142,12 @@ const SearchBar = ({ className }: { className?: string }) => {
             </SelectContent>
           </Select>
         </div>
-        
+
         <div className="col-span-1 md:col-span-4 mt-2">
-          <Button type="submit" className="w-full bg-clickprop-blue hover:bg-clickprop-blue-dark">
+          <Button
+            type="submit"
+            className="w-full bg-clickprop-blue hover:bg-clickprop-blue-dark"
+          >
             <Search className="h-4 w-4 mr-2" />
             Search Properties
           </Button>
