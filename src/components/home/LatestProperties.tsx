@@ -13,7 +13,7 @@ const LatestProperties = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['latestProperties'],
-    queryFn: getLatestProperties
+    queryFn: () => getLatestProperties(24), // Fetch more properties to handle pagination on client side
   });
 
   const properties = data?.data || [];
