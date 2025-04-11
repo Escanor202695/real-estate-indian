@@ -17,10 +17,10 @@ const CitiesManagementTab = () => {
     queryKey: ['adminCities'],
     queryFn: getCities,
     meta: {
-      onError: () => {
-        toast.error("Error", {
-          description: "Failed to fetch cities data"
-        });
+      onSettled: (_data: any, error: Error | null) => {
+        if (error) {
+          toast.error("Failed to fetch cities data");
+        }
       }
     }
   });

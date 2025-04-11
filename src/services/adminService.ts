@@ -2,6 +2,11 @@
 import api from './api';
 
 // Dashboard stats
+export const getAdminStats = async () => {
+  const response = await api.get('/admin/stats');
+  return response.data;
+};
+
 export const getDashboardStats = async () => {
   const response = await api.get('/admin/stats');
   return response.data;

@@ -1,24 +1,52 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building, Home, Users, ArrowUp, TrendingDown, TrendingUp, Eye } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { getAdminStats } from '@/services/adminService';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+
+// Define types for better TypeScript support
+interface AdminStats {
+  propertyStats: {
+    total: number;
+    active: number;
+    viewsThisMonth: number;
+    viewsLastMonth: number;
+    viewsChangePercent: number;
+    totalViews: number;
+    viewsByMonth: Array<{ month: string; count: number }>;
+  };
+  userStats: {
+    total: number;
+    active: number;
+    newThisMonth: number;
+    newLastMonth: number;
+    newUsersChangePercent: number;
+  };
+  cityStats: {
+    total: number;
+    topByPropertyCount: Array<{ name: string; propertyCount: number }>;
+    topBySearchCount: Array<{ name: string; searchCount: number }>;
+  };
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: AdminStats;
+}
 
 const AdminDashboardTab = () => {
-  const { toast } = useToast();
-  
-  const { data: statsData, isLoading, error } = useQuery({
+  const { data: statsData, isLoading, error } = useQuery<ApiResponse>({
     queryKey: ['adminStats'],
     queryFn: getAdminStats,
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to load dashboard statistics",
-        variant: "destructive"
-      });
+    meta: {
+      onSettled: (_data: ApiResponse | undefined, error: Error | null) => {
+        if (error) {
+          toast.error("Failed to load dashboard statistics");
+        }
+      }
     }
   });
 
