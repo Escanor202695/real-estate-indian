@@ -1,5 +1,6 @@
 
 const nodemailer = require('nodemailer');
+const User = require('../models/User');
 
 // Create reusable transporter
 const createTransporter = () => {
@@ -16,7 +17,7 @@ const createTransporter = () => {
 
 // @desc    Send email notification
 // @route   POST /api/users/notifications/email
-// @access  Private
+// @access  Public (consider adding protection based on your requirements)
 exports.sendEmail = async (req, res) => {
   try {
     const { to, subject, body, isHtml = false } = req.body;
@@ -70,7 +71,7 @@ exports.sendUserNotificationEmail = async (req, res) => {
       });
     }
     
-    const { message, type } = req.body;
+    const { message, type, subject: customSubject } = req.body;
     
     if (!message) {
       return res.status(400).json({
@@ -80,13 +81,19 @@ exports.sendUserNotificationEmail = async (req, res) => {
     }
     
     // Create subject based on notification type
-    let subject = 'ClickProp Notification';
-    if (type === 'property_alert') {
-      subject = 'New Properties Matching Your Search';
-    } else if (type === 'price_change') {
-      subject = 'Price Changed on a Property You're Interested In';
-    } else if (type === 'status_change') {
-      subject = 'Status Updated on a Property You're Interested In';
+    let subject = customSubject || 'ClickProp Notification';
+    if (!customSubject) {
+      if (type === 'property_alert') {
+        subject = 'New Properties Matching Your Search';
+      } else if (type === 'price_change') {
+        subject = 'Price Changed on a Property You're Interested In';
+      } else if (type === 'status_change') {
+        subject = 'Status Updated on a Property You're Interested In';
+      } else if (type === 'account_creation') {
+        subject = 'Your New ClickProp Account';
+      } else if (type === 'password_reset') {
+        subject = 'Reset Your ClickProp Password';
+      }
     }
     
     const transporter = createTransporter();
@@ -96,7 +103,7 @@ exports.sendUserNotificationEmail = async (req, res) => {
       from: `"${process.env.SMTP_FROM || 'ClickProp Real Estate'}" <${process.env.SMTP_USER}>`,
       to: user.email,
       subject,
-      text: message,
+      [req.body.isHtml ? 'html' : 'text']: message,
     });
 
     console.log('Email sent to user %s: %s', user.email, info.messageId);

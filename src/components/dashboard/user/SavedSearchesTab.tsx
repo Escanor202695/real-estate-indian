@@ -84,7 +84,7 @@ const SavedSearchesTab = () => {
         <CardHeader>
           <CardTitle>Saved Searches</CardTitle>
           <CardDescription>
-            Manage your saved property searches and notifications
+            Manage your saved property searches and get email notifications for new matching properties
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -125,7 +125,7 @@ const SavedSearchesTab = () => {
                       >
                         <Link to={`/properties?${formatSearchParams(search)}`}>
                           <Search className="h-4 w-4 mr-1" />
-                          View
+                          Search Again
                         </Link>
                       </Button>
                       <Button 

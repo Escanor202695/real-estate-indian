@@ -1,28 +1,27 @@
 
 import React from 'react';
-import { Building } from 'lucide-react';
 import { City } from '@/types/city';
 
-interface CityCardProps {
+type CityCardProps = {
   city: City;
-}
+  hideCounts?: boolean;
+};
 
-const CityCard: React.FC<CityCardProps> = ({ city }) => {
+const CityCard = ({ city, hideCounts = false }: CityCardProps) => {
   return (
-    <div className="city-card block rounded-lg overflow-hidden shadow-md transition-transform hover:scale-105">
-      <div className="relative h-48">
-        <img 
-          src={city.image || '/placeholder.svg'} 
-          alt={city.name} 
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black bg-opacity-40 flex flex-col justify-end p-4">
-          <h3 className="text-xl font-semibold text-white">{city.name}</h3>
-          <p className="flex items-center text-sm mt-1 text-white">
-            <Building size={14} className="mr-1" />
-            {city.propertyCount} Properties
+    <div className="relative rounded-lg overflow-hidden h-60 group">
+      <img
+        src={city.image}
+        alt={city.name}
+        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex flex-col justify-end p-4">
+        <h3 className="text-white text-xl font-bold mb-1">{city.name}</h3>
+        {!hideCounts && (
+          <p className="text-white/80 text-sm">
+            {city.propertyCount} properties
           </p>
-        </div>
+        )}
       </div>
     </div>
   );

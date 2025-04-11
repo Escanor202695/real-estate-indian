@@ -13,7 +13,7 @@ import {
 import { Search, BookmarkPlus } from "lucide-react";
 import { addRecentSearch, addSavedSearch } from "@/services/userService";
 import { isLoggedIn } from "@/services/authService";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +28,6 @@ import { Label } from "@/components/ui/label";
 const SearchBar = ({ className }: { className?: string }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
   const [locationQuery, setLocationQuery] = useState("");
   const [propertyType, setPropertyType] = useState("all");
   const [status, setStatus] = useState("all");
@@ -39,6 +38,7 @@ const SearchBar = ({ className }: { className?: string }) => {
   useEffect(() => {
     setIsLoggedInUser(isLoggedIn());
 
+    // Only load from URL params if on properties page
     if (location.pathname === "/properties") {
       const params = new URLSearchParams(location.search);
       const locationParam = params.get("location");
@@ -48,23 +48,11 @@ const SearchBar = ({ className }: { className?: string }) => {
       if (locationParam) setLocationQuery(locationParam);
       if (typeParam) setPropertyType(typeParam);
       if (statusParam) setStatus(statusParam);
-    } else {
-      const savedLocation = localStorage.getItem("searchLocation");
-      const savedType = localStorage.getItem("searchPropertyType");
-      const savedStatus = localStorage.getItem("searchStatus");
-
-      if (savedLocation) setLocationQuery(savedLocation);
-      if (savedType) setPropertyType(savedType);
-      if (savedStatus) setStatus(savedStatus);
     }
   }, [location.pathname, location.search]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-
-    localStorage.setItem("searchLocation", locationQuery);
-    localStorage.setItem("searchPropertyType", propertyType);
-    localStorage.setItem("searchStatus", status);
 
     const params = new URLSearchParams();
 
@@ -73,11 +61,11 @@ const SearchBar = ({ className }: { className?: string }) => {
     if (status !== "all") params.append("status", status);
 
     // Track the search in our system if user is logged in
-    if (locationQuery && isLoggedInUser) {
+    if (isLoggedInUser) {
       try {
         // Add to recent searches for logged-in users
         const searchData = {
-          query: locationQuery,
+          query: locationQuery || "All Properties",
           params: {
             location: locationQuery,
             propertyType: propertyType !== "all" ? propertyType : undefined,
