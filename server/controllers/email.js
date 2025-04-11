@@ -86,9 +86,9 @@ exports.sendUserNotificationEmail = async (req, res) => {
       if (type === 'property_alert') {
         subject = 'New Properties Matching Your Search';
       } else if (type === 'price_change') {
-        subject = 'Price Changed on a Property You're Interested In';
+        subject = 'Price Changed on a Property You\'re Interested In';
       } else if (type === 'status_change') {
-        subject = 'Status Updated on a Property You're Interested In';
+        subject = 'Status Updated on a Property You\'re Interested In';
       } else if (type === 'account_creation') {
         subject = 'Your New ClickProp Account';
       } else if (type === 'password_reset') {
