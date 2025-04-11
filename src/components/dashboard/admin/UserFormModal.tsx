@@ -73,13 +73,13 @@ const UserFormModal = ({ isOpen, onClose, user, onSubmit }: UserFormModalProps) 
 
   const handleSubmit = async (data: UserFormValues) => {
     try {
-      let userData = { ...data };
+      let userData: any = { ...data };
       
       // If adding a new user, generate a password
       let generatedPassword;
       if (!isEditMode) {
         generatedPassword = generatePassword();
-        userData = { ...userData, password: generatedPassword };
+        userData.password = generatedPassword;
       }
       
       await onSubmit(userData);

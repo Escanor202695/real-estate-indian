@@ -54,15 +54,12 @@ const BugReportForm = () => {
       setIsSubmitting(true);
       await submitBugReport(data);
       form.reset();
-      toast({
-        title: 'Bug report submitted',
-        description: 'Thank you for helping us improve ClickProp.',
+      toast.success('Bug report submitted', {
+        description: 'Thank you for helping us improve ClickProp.'
       });
     } catch (error) {
-      toast({
-        title: 'Error submitting report',
-        description: 'An error occurred. Please try again later.',
-        variant: 'destructive',
+      toast.error('Error submitting report', {
+        description: 'An error occurred. Please try again later.'
       });
     } finally {
       setIsSubmitting(false);

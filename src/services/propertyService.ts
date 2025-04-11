@@ -1,3 +1,4 @@
+
 import api from './api';
 import { Property } from '@/types/property';
 
@@ -48,18 +49,20 @@ export const importProperties = async (propertiesData: Partial<Property>[]) => {
   const transformedProperties = propertiesData.map(property => {
     // Extract coordinates from location string if present
     let coordinates = undefined;
-    if (property.location && typeof property.location === 'string' && property.location.includes(',')) {
-      const [lat, lng] = property.location.split(',').map(coord => parseFloat(coord.trim()));
-      if (!isNaN(lat) && !isNaN(lng)) {
-        coordinates = { lat, lng };
+    if (property.location && typeof property.location === 'string') {
+      if (property.location.includes(',')) {
+        const [lat, lng] = property.location.split(',').map(coord => parseFloat(coord.trim()));
+        if (!isNaN(lat) && !isNaN(lng)) {
+          coordinates = { lat, lng };
+        }
       }
     }
     
     // Extract state from address if present
     let state = 'Unknown';
-    let address = property.address || 'Unknown';
+    let address = property.address || property.location?.address || 'Unknown';
     
-    if (address && address.includes(',')) {
+    if (typeof address === 'string' && address.includes(',')) {
       const parts = address.split(',');
       if (parts.length > 1) {
         state = parts[parts.length - 1].trim();
@@ -67,11 +70,14 @@ export const importProperties = async (propertiesData: Partial<Property>[]) => {
     }
     
     // Process landmark details into features
-    let features = [];
+    let features: string[] = [];
     if (property.landmark_details && Array.isArray(property.landmark_details)) {
       features = property.landmark_details.map(detail => {
-        const parts = detail.split('|');
-        return parts.length > 1 ? parts[1] : detail;
+        if (typeof detail === 'string') {
+          const parts = detail.split('|');
+          return parts.length > 1 ? parts[1] : detail;
+        }
+        return String(detail);
       });
     }
     
@@ -86,8 +92,9 @@ export const importProperties = async (propertiesData: Partial<Property>[]) => {
       bedrooms: property.bedrooms || 0,
       bathrooms: property.bathrooms || 0,
       location: {
-        address: address,
-        city: property.city_name || (typeof property.location === 'object' && property.location?.city) || 'Unknown',
+        address: typeof address === 'string' ? address : 'Unknown',
+        city: typeof property.city_name === 'string' ? property.city_name : 
+              (property.location && typeof property.location === 'object' && property.location.city ? property.location.city : 'Unknown'),
         state: state,
         pincode: '', // Setting empty string as pincode is now optional
         coordinates: coordinates
@@ -128,7 +135,7 @@ function mapPropertyType(property: any): string {
     return property.type;
   }
   
-  const title = (property.name || property.title || '').toLowerCase();
+  const title = ((property.name || property.title || '') as string).toLowerCase();
   
   if (title.includes('apartment') || title.includes('flat')) {
     return 'flat';

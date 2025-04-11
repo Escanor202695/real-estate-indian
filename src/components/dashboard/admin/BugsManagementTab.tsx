@@ -36,6 +36,21 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 import { sendEmail } from '@/services/emailService';
 
+// Define bug type with specific severity values
+type Bug = {
+  _id: string;
+  title: string;
+  description: string;
+  steps?: string;
+  severity: 'low' | 'medium' | 'high';
+  reporterName: string;
+  reporterEmail: string;
+  status: 'open' | 'in-progress' | 'resolved' | 'closed';
+  createdAt: string;
+  resolvedAt: string | null;
+  notes: string;
+};
+
 // Mock API functions - replace these with actual API calls
 const getBugs = async () => {
   // Simulate API call
@@ -47,10 +62,10 @@ const getBugs = async () => {
         title: 'Search not working properly',
         description: 'When I search for properties in Delhi, no results are shown even though there should be some.',
         steps: '1. Go to homepage\n2. Enter "Delhi" in search\n3. Click search button',
-        severity: 'high',
+        severity: 'high' as const,
         reporterName: 'John Doe',
         reporterEmail: 'john@example.com',
-        status: 'open',
+        status: 'open' as const,
         createdAt: new Date().toISOString(),
         resolvedAt: null,
         notes: ''
@@ -60,10 +75,10 @@ const getBugs = async () => {
         title: 'Images not loading',
         description: 'Property images are not loading on the property details page.',
         steps: 'Click on any property to view details',
-        severity: 'medium',
+        severity: 'medium' as const,
         reporterName: 'Jane Smith',
         reporterEmail: 'jane@example.com',
-        status: 'in-progress',
+        status: 'in-progress' as const,
         createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
         resolvedAt: null,
         notes: 'Working on a fix for the image loading issue'
@@ -73,10 +88,10 @@ const getBugs = async () => {
         title: 'Login button not responding',
         description: 'Sometimes the login button does not respond when clicked.',
         steps: 'Try to log in multiple times',
-        severity: 'low',
+        severity: 'low' as const,
         reporterName: 'Bob Johnson',
         reporterEmail: 'bob@example.com',
-        status: 'resolved',
+        status: 'resolved' as const,
         createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
         resolvedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
         notes: 'Fixed in latest update'
@@ -95,20 +110,6 @@ const addBugNote = async (id: string, note: string) => {
   // Simulate API call
   console.log(`Adding note to bug ${id}: ${note}`);
   return { success: true };
-};
-
-type Bug = {
-  _id: string;
-  title: string;
-  description: string;
-  steps?: string;
-  severity: 'low' | 'medium' | 'high';
-  reporterName: string;
-  reporterEmail: string;
-  status: 'open' | 'in-progress' | 'resolved' | 'closed';
-  createdAt: string;
-  resolvedAt: string | null;
-  notes: string;
 };
 
 const BugsManagementTab = () => {
@@ -144,15 +145,12 @@ const BugsManagementTab = () => {
     try {
       await updateBugStatus(id, newStatus);
       refetch();
-      toast({
-        title: 'Status Updated',
-        description: `Bug status changed to ${newStatus}`,
+      toast.success('Status Updated', {
+        description: `Bug status changed to ${newStatus}`
       });
     } catch (error) {
-      toast({
-        title: 'Update Failed',
-        description: 'Failed to update bug status',
-        variant: 'destructive',
+      toast.error('Update Failed', {
+        description: 'Failed to update bug status'
       });
     }
   };
@@ -164,15 +162,12 @@ const BugsManagementTab = () => {
       await addBugNote(selectedBug._id, newNote);
       refetch();
       setNewNote('');
-      toast({
-        title: 'Note Added',
-        description: 'Bug note added successfully',
+      toast.success('Note Added', {
+        description: 'Bug note added successfully'
       });
     } catch (error) {
-      toast({
-        title: 'Failed to Add Note',
-        description: 'An error occurred while adding the note',
-        variant: 'destructive',
+      toast.error('Failed to Add Note', {
+        description: 'An error occurred while adding the note'
       });
     }
   };
@@ -200,9 +195,8 @@ const BugsManagementTab = () => {
         });
       }
       
-      toast({
-        title: 'Response Sent',
-        description: `Response sent to ${selectedBug.reporterEmail}`,
+      toast.success('Response Sent', {
+        description: `Response sent to ${selectedBug.reporterEmail}`
       });
       
       setIsRespondOpen(false);
@@ -213,10 +207,8 @@ const BugsManagementTab = () => {
         refetch();
       }
     } catch (error) {
-      toast({
-        title: 'Failed to Send',
-        description: 'An error occurred while sending the response',
-        variant: 'destructive',
+      toast.error('Failed to Send', {
+        description: 'An error occurred while sending the response'
       });
     }
   };

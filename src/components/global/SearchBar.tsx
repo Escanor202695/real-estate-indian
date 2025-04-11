@@ -87,10 +87,8 @@ const SearchBar = ({ className }: { className?: string }) => {
 
   const handleSaveSearch = async () => {
     if (!isLoggedInUser) {
-      toast({
-        title: "Login Required",
-        description: "Please login to save searches.",
-        variant: "destructive",
+      toast.error("Login Required", {
+        description: "Please login to save searches."
       });
       navigate("/login");
       return;
@@ -110,19 +108,15 @@ const SearchBar = ({ className }: { className?: string }) => {
 
       const response = await addSavedSearch(searchData);
 
-      toast({
-        title: "Search Saved",
-        description: "Your search has been saved successfully.",
+      toast.success("Search Saved", {
+        description: "Your search has been saved successfully."
       });
 
       setSaveDialogOpen(false);
     } catch (error) {
       console.error("Error saving search:", error);
-      toast({
-        title: "Save Failed",
-        description:
-          "Failed to save your search. It might already be saved or there was a server error.",
-        variant: "destructive",
+      toast.error("Save Failed", {
+        description: "Failed to save your search. It might already be saved or there was a server error."
       });
     }
   };
