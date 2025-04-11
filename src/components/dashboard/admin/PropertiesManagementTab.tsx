@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getProperties, deleteProperty } from '@/services/propertyService';
@@ -12,7 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import PropertiesPagination from '@/components/properties/PropertiesPagination';
 
@@ -24,7 +25,6 @@ const PropertiesManagementTab = () => {
   const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
-  const { toast } = useToast();
   
   // Build query params for API call
   const buildQueryParams = () => {
@@ -41,12 +41,12 @@ const PropertiesManagementTab = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['adminProperties', searchQuery, selectedType, selectedStatus, currentPage, itemsPerPage],
     queryFn: () => getProperties(buildQueryParams()),
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to fetch properties data",
-        variant: "destructive"
-      });
+    meta: {
+      onError: () => {
+        toast.error("Error", {
+          description: "Failed to fetch properties data"
+        });
+      }
     }
   });
 
@@ -55,16 +55,13 @@ const PropertiesManagementTab = () => {
     mutationFn: deleteProperty,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: "Property deleted successfully"
       });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete property",
-        variant: "destructive"
+      toast.error("Error", {
+        description: "Failed to delete property"
       });
     }
   });
@@ -73,17 +70,14 @@ const PropertiesManagementTab = () => {
   const notifyMutation = useMutation({
     mutationFn: (ids: string[]) => notifyUsers(ids),
     onSuccess: (data) => {
-      toast({
-        title: "Success",
+      toast.success("Success", {
         description: `Notified ${data.data.notifiedUsers.length} users about new properties`
       });
       setSelectedProperties([]);
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to send notifications",
-        variant: "destructive"
+      toast.error("Error", {
+        description: "Failed to send notifications"
       });
     }
   });
