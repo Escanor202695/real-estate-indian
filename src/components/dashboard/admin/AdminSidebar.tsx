@@ -1,98 +1,94 @@
 
-import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Home, Users, Map, Settings, LogOut } from 'lucide-react';
-import { logout } from '@/services/authService';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { 
+  Home, 
+  Users, 
+  Building2, 
+  MapPin, 
+  Settings,
+  LogOut,
+  Bug
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const AdminSidebar = () => {
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    toast.success('Logged out successfully');
-    navigate('/');
+  const location = useLocation();
+  
+  const isActive = (path: string) => {
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
-
+  
+  const menuItems = [
+    { 
+      name: 'Dashboard', 
+      path: '/admin', 
+      icon: Home 
+    },
+    { 
+      name: 'Users', 
+      path: '/admin/users', 
+      icon: Users 
+    },
+    { 
+      name: 'Properties', 
+      path: '/admin/properties', 
+      icon: Building2 
+    },
+    { 
+      name: 'Cities', 
+      path: '/admin/cities', 
+      icon: MapPin 
+    },
+    { 
+      name: 'Bug Reports', 
+      path: '/admin/bugs', 
+      icon: Bug 
+    },
+    { 
+      name: 'Settings', 
+      path: '/admin/settings', 
+      icon: Settings 
+    }
+  ];
+  
   return (
-    <div className="bg-white shadow-md rounded-lg p-4 h-full">
-      <div className="flex items-center mb-6">
-        <div className="bg-clickprop-blue rounded-md p-2 mr-3">
-          <Settings className="h-5 w-5 text-white" />
+    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="p-4 bg-clickprop-blue text-white">
+        <h2 className="text-xl font-bold">Admin Panel</h2>
+        <p className="text-sm opacity-75">Manage your website</p>
+      </div>
+      
+      <nav className="p-4">
+        <ul className="space-y-1">
+          {menuItems.map((item) => (
+            <li key={item.path}>
+              <Link
+                to={item.path}
+                className={cn(
+                  "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                  isActive(item.path)
+                    ? "bg-clickprop-blue text-white"
+                    : "text-gray-700 hover:bg-gray-100"
+                )}
+              >
+                <item.icon className="h-4 w-4 mr-3" />
+                {item.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        
+        <div className="mt-8 pt-4 border-t border-gray-200">
+          <Link
+            to="/logout"
+            className="flex items-center px-3 py-2 rounded-md text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+          >
+            <LogOut className="h-4 w-4 mr-3" />
+            Logout
+          </Link>
         </div>
-        <h2 className="text-xl font-semibold text-clickprop-blue">Admin Panel</h2>
-      </div>
-      
-      <nav className="space-y-2">
-        <NavLink 
-          to="/admin" 
-          end
-          className={({ isActive }) => 
-            `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-              isActive 
-                ? 'bg-clickprop-blue text-white' 
-                : 'text-gray-700 hover:bg-gray-100'
-            }`
-          }
-        >
-          <LayoutDashboard size={18} />
-          <span>Dashboard</span>
-        </NavLink>
-        
-        <NavLink 
-          to="/admin/properties" 
-          className={({ isActive }) => 
-            `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-              isActive 
-                ? 'bg-clickprop-blue text-white' 
-                : 'text-gray-700 hover:bg-gray-100'
-            }`
-          }
-        >
-          <Home size={18} />
-          <span>Properties</span>
-        </NavLink>
-        
-        <NavLink 
-          to="/admin/users" 
-          className={({ isActive }) => 
-            `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-              isActive 
-                ? 'bg-clickprop-blue text-white' 
-                : 'text-gray-700 hover:bg-gray-100'
-            }`
-          }
-        >
-          <Users size={18} />
-          <span>Users</span>
-        </NavLink>
-        
-        <NavLink 
-          to="/admin/cities" 
-          className={({ isActive }) => 
-            `flex items-center gap-3 px-3 py-2 rounded-md transition-colors ${
-              isActive 
-                ? 'bg-clickprop-blue text-white' 
-                : 'text-gray-700 hover:bg-gray-100'
-            }`
-          }
-        >
-          <Map size={18} />
-          <span>Cities</span>
-        </NavLink>
       </nav>
-      
-      <div className="mt-6 pt-6 border-t border-gray-200">
-        <Button 
-          variant="outline" 
-          className="w-full justify-start text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
-          onClick={handleLogout}
-        >
-          <LogOut size={18} className="mr-2" />
-          Logout
-        </Button>
-      </div>
     </div>
   );
 };

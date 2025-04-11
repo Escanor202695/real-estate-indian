@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PropertyList from '@/components/properties/PropertyList';
@@ -6,20 +7,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Property } from '@/types/property';
 import { Search, Filter, BookmarkPlus } from 'lucide-react';
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { getProperties } from '@/services/propertyService';
 import { useQuery } from '@tanstack/react-query';
+import { isLoggedIn } from '@/services/authService';
+import { addRecentSearch, addSavedSearch } from '@/services/userService';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 const Properties = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [notifyByEmail, setNotifyByEmail] = useState(true);
   
-  // Load initial values from URL params first, then localStorage if not present
+  // Load initial values from URL params
   const [locationQuery, setLocationQuery] = useState("");
   const [propertyType, setPropertyType] = useState("all");
   const [status, setStatus] = useState("all");
@@ -55,41 +68,68 @@ const Properties = () => {
   const totalCount = data?.count || 0;
   const totalPages = Math.ceil(totalCount / propertiesPerPage);
   
-  // Load filters from URL params or localStorage on initial render
+  // Load filters from URL params on initial render
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const locationParam = params.get('location');
     const typeParam = params.get('type');
     const statusParam = params.get('status');
     const pageParam = params.get('page');
+    const minPriceParam = params.get('minPrice');
+    const maxPriceParam = params.get('maxPrice');
+    const bedroomsParam = params.get('bedrooms');
     
-    // Set location from URL or localStorage
+    // Set location from URL
     if (locationParam) {
       setLocationQuery(locationParam);
-    } else {
-      const savedLocation = localStorage.getItem('searchLocation');
-      if (savedLocation) setLocationQuery(savedLocation);
     }
     
-    // Set type from URL or localStorage
+    // Set type from URL
     if (typeParam) {
       setPropertyType(typeParam);
-    } else {
-      const savedType = localStorage.getItem('searchPropertyType');
-      if (savedType) setPropertyType(savedType);
     }
     
-    // Set status from URL or localStorage
+    // Set status from URL
     if (statusParam) {
       setStatus(statusParam);
-    } else {
-      const savedStatus = localStorage.getItem('searchStatus');
-      if (savedStatus) setStatus(savedStatus);
+    }
+
+    // Set price range from URL
+    if (minPriceParam || maxPriceParam) {
+      setPriceRange([
+        minPriceParam ? parseInt(minPriceParam) : 0,
+        maxPriceParam ? parseInt(maxPriceParam) : 25000000
+      ]);
+    }
+
+    // Set bedrooms from URL
+    if (bedroomsParam) {
+      setBedrooms(bedroomsParam);
     }
     
     // Set page from URL
     if (pageParam) {
       setCurrentPage(parseInt(pageParam, 10));
+    }
+
+    // Add to recent searches if user is logged in
+    if (isLoggedIn() && (locationParam || typeParam || statusParam)) {
+      const searchData = {
+        query: locationParam || 'All Properties',
+        params: {
+          location: locationParam,
+          propertyType: typeParam !== 'all' ? typeParam : undefined,
+          status: statusParam !== 'all' ? statusParam : undefined,
+          minPrice: minPriceParam ? parseInt(minPriceParam) : undefined,
+          maxPrice: maxPriceParam ? parseInt(maxPriceParam) : undefined,
+          bedrooms: bedroomsParam ? parseInt(bedroomsParam) : undefined,
+        },
+        timestamp: new Date().toISOString(),
+      };
+
+      addRecentSearch(searchData).catch(err => 
+        console.log("Error saving recent search:", err)
+      );
     }
   }, [location.search]);
   
@@ -99,11 +139,6 @@ const Properties = () => {
   
   const applyFilters = () => {
     setLoading(true);
-    
-    // Save search params to localStorage
-    localStorage.setItem('searchLocation', locationQuery);
-    localStorage.setItem('searchPropertyType', propertyType);
-    localStorage.setItem('searchStatus', status);
     
     // Reset to first page when applying new filters
     setCurrentPage(1);
@@ -123,6 +158,9 @@ const Properties = () => {
     if (locationQuery) params.append('location', locationQuery);
     if (propertyType !== 'all') params.append('type', propertyType);
     if (status !== 'all') params.append('status', status);
+    if (priceRange[0] > 0) params.append('minPrice', priceRange[0].toString());
+    if (priceRange[1] < 25000000) params.append('maxPrice', priceRange[1].toString());
+    if (bedrooms !== 'any') params.append('bedrooms', bedrooms);
     if (currentPage > 1) params.append('page', currentPage.toString());
     
     const newUrl = `/properties?${params.toString()}`;
@@ -130,25 +168,48 @@ const Properties = () => {
   };
 
   // Save the current search
-  const saveSearch = () => {
-    // Here you would typically save to user account, but for now just localStorage
-    const searchParams = {
-      location: locationQuery,
-      propertyType,
-      status,
-      priceRange,
-      bedrooms,
-      savedAt: new Date().toISOString()
-    };
+  const handleSaveSearch = () => {
+    // Check if user is logged in
+    if (!isLoggedIn()) {
+      toast({
+        title: "Login Required",
+        description: "Please login to save searches.",
+        variant: "destructive",
+      });
+      navigate("/login", { state: { from: location } });
+      return;
+    }
     
-    const savedSearches = JSON.parse(localStorage.getItem('savedSearches') || '[]');
-    savedSearches.push(searchParams);
-    localStorage.setItem('savedSearches', JSON.stringify(savedSearches));
-    
-    toast({
-      title: "Search Saved",
-      description: "Your property search has been saved successfully.",
-    });
+    setSaveDialogOpen(true);
+  };
+
+  const confirmSaveSearch = async () => {
+    try {
+      const searchData = {
+        location: locationQuery,
+        propertyType,
+        status,
+        minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
+        maxPrice: priceRange[1] < 25000000 ? priceRange[1] : undefined,
+        bedrooms: bedrooms !== 'any' ? parseInt(bedrooms) : undefined,
+        notifyByEmail,
+      };
+
+      await addSavedSearch(searchData);
+      
+      toast({
+        title: "Search Saved",
+        description: "Your property search has been saved successfully.",
+      });
+      
+      setSaveDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save your search. It might already be saved or there was a server error.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Change page
@@ -222,7 +283,7 @@ const Properties = () => {
             <Button
               variant="outline"
               className="flex items-center"
-              onClick={saveSearch}
+              onClick={handleSaveSearch}
             >
               <BookmarkPlus className="h-4 w-4 mr-2" />
               Save Search
@@ -361,6 +422,79 @@ const Properties = () => {
           </div>
         </div>
       </div>
+
+      {/* Save Search Dialog */}
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Search</DialogTitle>
+            <DialogDescription>
+              Save this search to quickly access it later and get notifications
+              when new properties match your criteria.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="mb-4 p-3 bg-gray-50 rounded-md">
+              <h4 className="font-medium mb-2">Search Criteria</h4>
+              <div className="text-sm text-gray-600">
+                <p>
+                  <strong>Location:</strong> {locationQuery || "Any location"}
+                </p>
+                <p>
+                  <strong>Property Type:</strong>{" "}
+                  {propertyType !== "all" ? propertyType : "Any type"}
+                </p>
+                <p>
+                  <strong>Status:</strong>{" "}
+                  {status !== "all"
+                    ? status === "sale"
+                      ? "For Sale"
+                      : "For Rent"
+                    : "Buy or Rent"}
+                </p>
+                {bedrooms !== 'any' && (
+                  <p><strong>Bedrooms:</strong> {bedrooms}+</p>
+                )}
+                {(priceRange[0] > 0 || priceRange[1] < 25000000) && (
+                  <p>
+                    <strong>Price Range:</strong> ₹{priceRange[0].toLocaleString()} - 
+                    ₹{priceRange[1].toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="notification"
+                checked={notifyByEmail}
+                onCheckedChange={(checked) =>
+                  setNotifyByEmail(checked as boolean)
+                }
+              />
+              <Label htmlFor="notification">
+                Notify me by email when new matching properties are added
+              </Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSaveDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-clickprop-blue hover:bg-clickprop-blue-dark"
+              onClick={confirmSaveSearch}
+            >
+              Save Search
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
