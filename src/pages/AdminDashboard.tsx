@@ -15,10 +15,12 @@ const AdminDashboard = () => {
     queryFn: getCurrentUser,
     retry: 1,
     meta: {
-      onError: () => {
-        toast.error("Authentication Error", {
-          description: "Please log in to access the admin dashboard."
-        });
+      onSettled: (_data: any, error: Error | null) => {
+        if (error) {
+          toast.error("Authentication Error", {
+            description: "Please log in to access the admin dashboard."
+          });
+        }
       }
     }
   });

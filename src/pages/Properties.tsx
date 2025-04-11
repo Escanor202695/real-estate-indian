@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import PropertyList from '@/components/properties/PropertyList';
@@ -8,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Search, Filter, BookmarkPlus } from 'lucide-react';
-import { toast } from "sonner";
+import { toast } from 'sonner';
 import { getProperties } from '@/services/propertyService';
 import { useQuery } from '@tanstack/react-query';
 import { isLoggedIn } from '@/services/authService';
@@ -32,18 +31,15 @@ const Properties = () => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [notifyByEmail, setNotifyByEmail] = useState(true);
   
-  // Load initial values from URL params
   const [locationQuery, setLocationQuery] = useState("");
   const [propertyType, setPropertyType] = useState("all");
   const [status, setStatus] = useState("all");
   const [priceRange, setPriceRange] = useState([0, 25000000]);
   const [bedrooms, setBedrooms] = useState("any");
   
-  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [propertiesPerPage] = useState(6);
   
-  // Build query params for API call
   const buildQueryParams = () => {
     const params: any = {};
     if (locationQuery) params.location = locationQuery;
@@ -57,18 +53,16 @@ const Properties = () => {
     return params;
   };
   
-  // Fetch properties using React Query
   const { data, isLoading, error } = useQuery({
     queryKey: ['properties', locationQuery, propertyType, status, priceRange, bedrooms, currentPage],
     queryFn: () => getProperties(buildQueryParams()),
-    enabled: !loading // Don't fetch if we're already loading
+    enabled: !loading
   });
   
   const properties = data?.data || [];
   const totalCount = data?.count || 0;
   const totalPages = Math.ceil(totalCount / propertiesPerPage);
   
-  // Load filters from URL params on initial render
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const locationParam = params.get('location');
@@ -79,22 +73,18 @@ const Properties = () => {
     const maxPriceParam = params.get('maxPrice');
     const bedroomsParam = params.get('bedrooms');
     
-    // Set location from URL
     if (locationParam) {
       setLocationQuery(locationParam);
     }
     
-    // Set type from URL
     if (typeParam) {
       setPropertyType(typeParam);
     }
     
-    // Set status from URL
     if (statusParam) {
       setStatus(statusParam);
     }
 
-    // Set price range from URL
     if (minPriceParam || maxPriceParam) {
       setPriceRange([
         minPriceParam ? parseInt(minPriceParam) : 0,
@@ -102,17 +92,14 @@ const Properties = () => {
       ]);
     }
 
-    // Set bedrooms from URL
     if (bedroomsParam) {
       setBedrooms(bedroomsParam);
     }
     
-    // Set page from URL
     if (pageParam) {
       setCurrentPage(parseInt(pageParam, 10));
     }
 
-    // Add to recent searches if user is logged in
     if (isLoggedIn() && (locationParam || typeParam || statusParam)) {
       const searchData = {
         query: locationParam || 'All Properties',
@@ -140,10 +127,8 @@ const Properties = () => {
   const applyFilters = () => {
     setLoading(true);
     
-    // Reset to first page when applying new filters
     setCurrentPage(1);
     
-    // Update URL
     updateUrl();
     
     setTimeout(() => {
@@ -151,7 +136,6 @@ const Properties = () => {
     }, 300);
   };
 
-  // Update URL with current filter values and page
   const updateUrl = () => {
     const params = new URLSearchParams();
     
@@ -167,15 +151,9 @@ const Properties = () => {
     navigate(newUrl, { replace: true });
   };
 
-  // Save the current search
   const handleSaveSearch = () => {
-    // Check if user is logged in
     if (!isLoggedIn()) {
-      toast({
-        title: "Login Required",
-        description: "Please login to save searches.",
-        variant: "destructive",
-      });
+      toast.error("Login Required");
       navigate("/login", { state: { from: location } });
       return;
     }
@@ -197,25 +175,16 @@ const Properties = () => {
 
       await addSavedSearch(searchData);
       
-      toast({
-        title: "Search Saved",
-        description: "Your property search has been saved successfully.",
-      });
+      toast.success("Search saved successfully");
       
       setSaveDialogOpen(false);
     } catch (error) {
-      toast({
-        title: "Save Failed",
-        description: "Failed to save your search. It might already be saved or there was a server error.",
-        variant: "destructive",
-      });
+      toast.error("Save Failed");
     }
   };
 
-  // Change page
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
-    // Update URL with new page number
     const params = new URLSearchParams(location.search);
     if (pageNumber > 1) {
       params.set('page', pageNumber.toString());
@@ -225,8 +194,7 @@ const Properties = () => {
     navigate(`/properties?${params.toString()}`, { replace: true });
     window.scrollTo(0, 0);
   };
-  
-  // Helper function to construct the search summary
+
   const getSearchSummary = () => {
     let summary = '';
     
@@ -395,7 +363,6 @@ const Properties = () => {
           </div>
           
           <div className="lg:w-3/4">
-            {/* Search summary info box */}
             {locationQuery && (
               <div className="p-4 bg-clickprop-bg-gray rounded-lg flex items-center mb-6">
                 <Search className="h-5 w-5 text-clickprop-blue mr-2" />
@@ -423,7 +390,6 @@ const Properties = () => {
         </div>
       </div>
 
-      {/* Save Search Dialog */}
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
         <DialogContent>
           <DialogHeader>
