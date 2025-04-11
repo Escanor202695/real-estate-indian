@@ -73,3 +73,9 @@ export const incrementPropertyViews = async (propertyId: string) => {
   const response = await api.post(`/properties/${propertyId}/view`);
   return response.data;
 };
+
+// Add the missing importProperties function
+export const importProperties = async (propertiesData: any[]) => {
+  const response = await api.post('/properties/import', propertiesData);
+  return response.data;
+};
