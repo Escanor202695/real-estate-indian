@@ -1,4 +1,3 @@
-
 import api from './api';
 
 // Property listings
@@ -74,8 +73,15 @@ export const incrementPropertyViews = async (propertyId: string) => {
   return response.data;
 };
 
-// Add the missing importProperties function
+// Update the importProperties function to better handle errors
 export const importProperties = async (propertiesData: any[]) => {
-  const response = await api.post('/properties/import', propertiesData);
-  return response.data;
+  try {
+    console.log(`Sending ${propertiesData.length} properties to server`);
+    const response = await api.post('/properties/import', propertiesData);
+    console.log('Import API response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Import API error:', error);
+    throw error;
+  }
 };

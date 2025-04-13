@@ -13,17 +13,19 @@ const Properties = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
+    console.log("File selected:", file.name);
 
     const reader = new FileReader();
 
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const jsonData = JSON.parse(e.target?.result as string);
+        console.log("JSON parsed successfully");
 
         if (!Array.isArray(jsonData)) {
           toast({
@@ -35,7 +37,7 @@ const Properties = () => {
           return;
         }
 
-        // Validate required fields
+        // Only validate required fields according to the updated requirements
         const invalidProperties = jsonData.filter(
           (property) => 
             !property.title || 
@@ -59,72 +61,68 @@ const Properties = () => {
           }
         }
 
-        console.log("Properties to import:", jsonData);
-        console.log("First property example:", jsonData[0]);
+        console.log("Properties to import:", jsonData.length);
+        console.log("First property example:", JSON.stringify(jsonData[0]));
 
         toast({
           title: "Processing data",
           description: `Preparing ${jsonData.length - invalidProperties.length} properties for import...`,
         });
 
-        // Send the data to the API
-        importProperties(jsonData.filter(p => 
-          p.title && 
-          p.description && 
-          p.type && 
-          p.status && 
-          typeof p.price === 'number' && 
-          typeof p.size === 'number'
-        ))
-          .then((response) => {
-            console.log("Import response:", response);
-            toast({
-              title: "Upload successful",
-              description: `${
-                response.count || response.data?.length || "All"
-              } properties imported successfully`,
-            });
-            queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
-
-            // Reset the file input
-            if (event.target) {
-              event.target.value = "";
-            }
-          })
-          .catch((error) => {
-            console.error("Import error:", error);
-            let errorMessage = "Failed to import properties";
-
-            if (
-              error.response &&
-              error.response.data &&
-              error.response.data.message
-            ) {
-              errorMessage += `: ${error.response.data.message}`;
-            } else if (error.message) {
-              errorMessage += `: ${error.message}`;
-            }
-
-            toast({
-              title: "Upload failed",
-              description: errorMessage,
-              variant: "destructive",
-            });
-          })
-          .finally(() => {
-            setIsUploading(false);
+        try {
+          // Send the data to the API
+          const response = await importProperties(jsonData.filter(p => 
+            p.title && 
+            p.description && 
+            p.type && 
+            p.status && 
+            typeof p.price === 'number' && 
+            typeof p.size === 'number'
+          ));
+          
+          console.log("Import response:", response);
+          toast({
+            title: "Upload successful",
+            description: `${
+              response.count || response.data?.length || "All"
+            } properties imported successfully`,
           });
+          queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
+        } catch (error: any) {
+          console.error("Import API error:", error);
+          let errorMessage = "Failed to import properties";
+
+          if (error.response && error.response.data && error.response.data.message) {
+            errorMessage += `: ${error.response.data.message}`;
+          } else if (error.message) {
+            errorMessage += `: ${error.message}`;
+          }
+
+          toast({
+            title: "Upload failed",
+            description: errorMessage,
+            variant: "destructive",
+          });
+        }
+
+        // Reset the file input
+        if (event.target) {
+          event.target.value = "";
+        }
       } catch (error) {
+        console.error("JSON parsing error:", error);
         toast({
           title: "Error parsing JSON",
           description: "Please check your file format and try again",
           variant: "destructive",
         });
+      } finally {
         setIsUploading(false);
       }
     };
 
     reader.onerror = () => {
+      console.error("FileReader error");
       toast({
         title: "Error reading file",
         description: "There was an error reading the file",

@@ -259,25 +259,19 @@ exports.importProperties = async (req, res) => {
       console.log('Sample property received:', JSON.stringify(properties[0], null, 2));
     }
     
-    // Validate required fields for each property
+    // Validate required fields for each property - only the updated required fields
     const validProperties = properties.filter(property => {
       if (!property.title || 
+          !property.description ||
           !property.type || 
           !property.status || 
-          !property.location || 
-          typeof property.price !== 'number') {
+          typeof property.price !== 'number' ||
+          typeof property.size !== 'number') {
         console.log('Invalid property:', property.title || 'unnamed');
         return false;
       }
       
-      // Make sure location has the required fields (except pincode which is now optional)
-      if (!property.location.address || 
-          !property.location.city || 
-          !property.location.state) {
-        console.log('Invalid location:', property.location);
-        return false;
-      }
-      
+      // All other fields are optional now
       return true;
     });
     
@@ -294,7 +288,7 @@ exports.importProperties = async (req, res) => {
     const insertedProperties = await Property.insertMany(validProperties);
     console.log(`Successfully inserted ${insertedProperties.length} properties`);
     
-    // Update city property counts
+    // Update city property counts if city is provided
     for (const property of insertedProperties) {
       if (property.location && property.location.city) {
         await City.findOneAndUpdate(

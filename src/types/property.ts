@@ -7,6 +7,8 @@ export interface Property {
   status: string; // sale or rent
   price: number;
   size: number; // in sq ft
+  
+  // All other fields are optional
   bedrooms?: number;
   bathrooms?: number;
   location?: {
