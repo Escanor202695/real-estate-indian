@@ -59,11 +59,11 @@ const App = () => {
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
-            <Toaster />
-            <Sonner />
             <div className="flex flex-col min-h-screen">
               <Navbar />
               <main className="flex-grow">
+                <Toaster />
+                <Sonner />
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/properties" element={<Properties />} />
