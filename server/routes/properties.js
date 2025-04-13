@@ -1,5 +1,5 @@
-
 const express = require('express');
+const multer = require('multer');
 const { 
   getProperties, 
   getProperty, 
@@ -8,12 +8,29 @@ const {
   deleteProperty,
   getLatestProperties,
   getFeaturedProperties,
-  importProperties
+  importProperties,
+  uploadPropertiesFile
 } = require('../controllers/properties');
 
 const { protect, authorize } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Configure multer for JSON file uploads
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    // Accept only JSON files
+    if (file.mimetype === 'application/json') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JSON files are allowed'), false);
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  }
+});
 
 /**
  * @swagger
@@ -67,9 +84,36 @@ router.route('/featured').get(getFeaturedProperties);
 
 /**
  * @swagger
+ * /api/properties/upload:
+ *   post:
+ *     summary: Upload and import properties from JSON file
+ *     tags: [Properties]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Properties imported successfully
+ *       401:
+ *         description: Not authorized
+ *       400:
+ *         description: Invalid data
+ */
+router.route('/upload').post(protect, authorize('admin'), upload.single('file'), uploadPropertiesFile);
+
+/**
+ * @swagger
  * /api/properties/import:
  *   post:
- *     summary: Import multiple properties
+ *     summary: Import multiple properties from JSON data
  *     tags: [Properties]
  *     security:
  *       - bearerAuth: []
