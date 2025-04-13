@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Table,
   TableBody,
@@ -31,186 +31,132 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { AlertCircle, Bug, Check, Mail, MessageCircle, X } from 'lucide-react';
+import {
+  AlertCircle,
+  Bug,
+  Check,
+  Mail,
+  MessageCircle,
+  X,
+  AlertTriangle,
+  RefreshCw,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { sendEmail } from '@/services/emailService';
-
-// Define bug type with specific severity values
-type Bug = {
-  _id: string;
-  title: string;
-  description: string;
-  steps?: string;
-  severity: 'low' | 'medium' | 'high';
-  reporterName: string;
-  reporterEmail: string;
-  status: 'open' | 'in-progress' | 'resolved' | 'closed';
-  createdAt: string;
-  resolvedAt: string | null;
-  notes: string;
-};
-
-// Mock API functions - replace these with actual API calls
-const getBugs = async () => {
-  // Simulate API call
-  return {
-    success: true,
-    data: [
-      {
-        _id: '1',
-        title: 'Search not working properly',
-        description: 'When I search for properties in Delhi, no results are shown even though there should be some.',
-        steps: '1. Go to homepage\n2. Enter "Delhi" in search\n3. Click search button',
-        severity: 'high' as const,
-        reporterName: 'John Doe',
-        reporterEmail: 'john@example.com',
-        status: 'open' as const,
-        createdAt: new Date().toISOString(),
-        resolvedAt: null,
-        notes: ''
-      },
-      {
-        _id: '2',
-        title: 'Images not loading',
-        description: 'Property images are not loading on the property details page.',
-        steps: 'Click on any property to view details',
-        severity: 'medium' as const,
-        reporterName: 'Jane Smith',
-        reporterEmail: 'jane@example.com',
-        status: 'in-progress' as const,
-        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        resolvedAt: null,
-        notes: 'Working on a fix for the image loading issue'
-      },
-      {
-        _id: '3',
-        title: 'Login button not responding',
-        description: 'Sometimes the login button does not respond when clicked.',
-        steps: 'Try to log in multiple times',
-        severity: 'low' as const,
-        reporterName: 'Bob Johnson',
-        reporterEmail: 'bob@example.com',
-        status: 'resolved' as const,
-        createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-        resolvedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        notes: 'Fixed in latest update'
-      }
-    ]
-  };
-};
-
-const updateBugStatus = async (id: string, status: string) => {
-  // Simulate API call
-  console.log(`Updating bug ${id} to status: ${status}`);
-  return { success: true };
-};
-
-const addBugNote = async (id: string, note: string) => {
-  // Simulate API call
-  console.log(`Adding note to bug ${id}: ${note}`);
-  return { success: true };
-};
+import { 
+  getAllBugReports, 
+  updateBugStatus, 
+  addBugNote, 
+  respondToBugReport,
+  type BugReport 
+} from '@/services/bugReportService';
 
 const BugsManagementTab = () => {
-  const [selectedBug, setSelectedBug] = useState<Bug | null>(null);
+  const [selectedBug, setSelectedBug] = useState<BugReport | null>(null);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isRespondOpen, setIsRespondOpen] = useState(false);
   const [responseMessage, setResponseMessage] = useState('');
   const [sendCopy, setSendCopy] = useState(false);
   const [notifyResolution, setNotifyResolution] = useState(false);
   const [newNote, setNewNote] = useState('');
+  const queryClient = useQueryClient();
 
   // Fetch bugs data
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['bugs'],
-    queryFn: getBugs
+  const {
+    data,
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['bugReports'],
+    queryFn: getAllBugReports
+  });
+
+  // Setup mutations
+  const updateStatusMutation = useMutation({
+    mutationFn: ({id, status}: {id: string, status: string}) => 
+      updateBugStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bugReports'] });
+      toast.success('Status Updated', {
+        description: 'Bug status has been updated successfully'
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating bug status:', error);
+      toast.error('Update Failed', {
+        description: 'Could not update bug status'
+      });
+    }
+  });
+
+  const addNoteMutation = useMutation({
+    mutationFn: ({id, note}: {id: string, note: string}) => 
+      addBugNote(id, note),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bugReports'] });
+      setNewNote('');
+      toast.success('Note Added', {
+        description: 'Bug note added successfully'
+      });
+    },
+    onError: (error) => {
+      console.error('Error adding bug note:', error);
+      toast.error('Failed to Add Note', {
+        description: 'An error occurred while adding the note'
+      });
+    }
+  });
+
+  const respondMutation = useMutation({
+    mutationFn: ({id, message, markAsResolved}: {id: string, message: string, markAsResolved: boolean}) => 
+      respondToBugReport(id, message, markAsResolved),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['bugReports'] });
+      setIsRespondOpen(false);
+      toast.success('Response Sent', {
+        description: `Response sent to the reporter successfully`
+      });
+    },
+    onError: (error) => {
+      console.error('Error responding to bug:', error);
+      toast.error('Response Failed', {
+        description: 'Could not send response email. Please check SMTP settings.'
+      });
+    }
   });
 
   const bugs = data?.data || [];
 
-  const handleViewBug = (bug: Bug) => {
+  const handleViewBug = (bug: BugReport) => {
     setSelectedBug(bug);
     setIsViewOpen(true);
   };
 
-  const handleRespondToBug = (bug: Bug) => {
+  const handleRespondToBug = (bug: BugReport) => {
     setSelectedBug(bug);
     setIsRespondOpen(true);
     // Pre-populate a response template
     setResponseMessage(`Dear ${bug.reporterName},\n\nThank you for reporting this issue. We're looking into it and will keep you updated on our progress.\n\nBest regards,\nClickProp Support Team`);
   };
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    try {
-      await updateBugStatus(id, newStatus);
-      refetch();
-      toast.success('Status Updated', {
-        description: `Bug status changed to ${newStatus}`
-      });
-    } catch (error) {
-      toast.error('Update Failed', {
-        description: 'Failed to update bug status'
-      });
-    }
+  const handleStatusChange = (id: string, newStatus: string) => {
+    updateStatusMutation.mutate({ id, status: newStatus });
   };
 
-  const handleAddNote = async () => {
+  const handleAddNote = () => {
     if (!selectedBug || !newNote.trim()) return;
-    
-    try {
-      await addBugNote(selectedBug._id, newNote);
-      refetch();
-      setNewNote('');
-      toast.success('Note Added', {
-        description: 'Bug note added successfully'
-      });
-    } catch (error) {
-      toast.error('Failed to Add Note', {
-        description: 'An error occurred while adding the note'
-      });
-    }
+    addNoteMutation.mutate({ id: selectedBug._id, note: newNote });
   };
 
-  const handleSendResponse = async () => {
+  const handleSendResponse = () => {
     if (!selectedBug || !responseMessage.trim()) return;
     
-    try {
-      // Send email to the reporter
-      await sendEmail({
-        to: selectedBug.reporterEmail,
-        subject: `Re: Bug Report - ${selectedBug.title}`,
-        body: responseMessage,
-        isHtml: false
-      });
-      
-      // Send a copy to admin if checked
-      if (sendCopy) {
-        // This would typically use the logged-in admin's email
-        await sendEmail({
-          to: 'admin@clickprop.com',
-          subject: `Copy: Response to Bug Report - ${selectedBug.title}`,
-          body: `Response sent to ${selectedBug.reporterName} (${selectedBug.reporterEmail}):\n\n${responseMessage}`,
-          isHtml: false
-        });
-      }
-      
-      toast.success('Response Sent', {
-        description: `Response sent to ${selectedBug.reporterEmail}`
-      });
-      
-      setIsRespondOpen(false);
-      
-      // If notification for resolution is requested
-      if (notifyResolution) {
-        await updateBugStatus(selectedBug._id, 'resolved');
-        refetch();
-      }
-    } catch (error) {
-      toast.error('Failed to Send', {
-        description: 'An error occurred while sending the response'
-      });
-    }
+    respondMutation.mutate({
+      id: selectedBug._id,
+      message: responseMessage,
+      markAsResolved: notifyResolution
+    });
   };
 
   const getSeverityBadge = (severity: string) => {
@@ -240,6 +186,33 @@ const BugsManagementTab = () => {
         return <Badge variant="outline">Unknown</Badge>;
     }
   };
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" /> 
+            Error Loading Bug Reports
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-red-500 mb-4">
+              There was an error loading the bug reports. Please check your connection and try again.
+            </p>
+            <Button 
+              onClick={() => refetch()}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="h-4 w-4" /> Retry
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -291,7 +264,7 @@ const BugsManagementTab = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bugs.map((bug: Bug) => (
+                {bugs.map((bug: BugReport) => (
                   <TableRow key={bug._id}>
                     <TableCell className="font-medium">{bug.title}</TableCell>
                     <TableCell>{bug.reporterName}</TableCell>
@@ -375,6 +348,7 @@ const BugsManagementTab = () => {
                       size="sm" 
                       variant={selectedBug.status === 'open' ? 'default' : 'outline'}
                       onClick={() => handleStatusChange(selectedBug._id, 'open')}
+                      disabled={updateStatusMutation.isPending}
                     >
                       Open
                     </Button>
@@ -382,6 +356,7 @@ const BugsManagementTab = () => {
                       size="sm" 
                       variant={selectedBug.status === 'in-progress' ? 'default' : 'outline'}
                       onClick={() => handleStatusChange(selectedBug._id, 'in-progress')}
+                      disabled={updateStatusMutation.isPending}
                     >
                       In Progress
                     </Button>
@@ -390,6 +365,7 @@ const BugsManagementTab = () => {
                       variant={selectedBug.status === 'resolved' ? 'default' : 'outline'}
                       onClick={() => handleStatusChange(selectedBug._id, 'resolved')}
                       className="bg-green-600 text-white hover:bg-green-700"
+                      disabled={updateStatusMutation.isPending}
                     >
                       <Check className="h-4 w-4 mr-1" />
                       Resolved
@@ -398,6 +374,7 @@ const BugsManagementTab = () => {
                       size="sm" 
                       variant={selectedBug.status === 'closed' ? 'default' : 'outline'}
                       onClick={() => handleStatusChange(selectedBug._id, 'closed')}
+                      disabled={updateStatusMutation.isPending}
                     >
                       <X className="h-4 w-4 mr-1" />
                       Closed
@@ -423,9 +400,9 @@ const BugsManagementTab = () => {
                   <Button 
                     size="sm" 
                     onClick={handleAddNote}
-                    disabled={!newNote.trim()}
+                    disabled={!newNote.trim() || addNoteMutation.isPending}
                   >
-                    Add Note
+                    {addNoteMutation.isPending ? 'Adding...' : 'Add Note'}
                   </Button>
                 </div>
               </div>
@@ -469,7 +446,12 @@ const BugsManagementTab = () => {
               <div className="space-y-4 my-4">
                 <div className="bg-gray-50 p-4 rounded-md mb-4">
                   <h4 className="font-medium mb-2">Bug: {selectedBug.title}</h4>
-                  <p className="text-sm text-gray-600">{selectedBug.description.substring(0, 100)}...</p>
+                  <p className="text-sm text-gray-600">
+                    {selectedBug.description.length > 100 
+                      ? `${selectedBug.description.substring(0, 100)}...` 
+                      : selectedBug.description
+                    }
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
@@ -530,10 +512,10 @@ const BugsManagementTab = () => {
                 <Button 
                   onClick={handleSendResponse}
                   className="bg-clickprop-blue hover:bg-clickprop-blue-dark"
-                  disabled={!responseMessage.trim()}
+                  disabled={!responseMessage.trim() || respondMutation.isPending}
                 >
                   <Mail className="h-4 w-4 mr-1" />
-                  Send Response
+                  {respondMutation.isPending ? 'Sending...' : 'Send Response'}
                 </Button>
               </DialogFooter>
             </DialogContent>
