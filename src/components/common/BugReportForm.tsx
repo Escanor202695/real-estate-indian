@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BugIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { isLoggedIn } from '@/services/authService';
-import { submitBugReport } from '@/services/bugReportService';
+import { submitBugReport, BugReportFormData } from '@/services/bugReportService';
 import { useNavigate } from 'react-router-dom';
 
 // Define the schema for bug report form
@@ -20,7 +20,7 @@ const bugReportSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters long'),
   description: z.string().min(10, 'Description must be at least 10 characters long'),
   steps: z.string().optional(),
-  severity: z.string(),
+  severity: z.enum(['low', 'medium', 'high']),
   reporterName: z.string().min(2, 'Please provide your name'),
   reporterEmail: z.string().email('Please provide a valid email address'),
 });
@@ -47,7 +47,18 @@ const BugReportForm = () => {
   const onSubmit = async (data: BugReportFormValues) => {
     try {
       setIsSubmitting(true);
-      await submitBugReport(data);
+      // Cast the data to BugReportFormData to ensure it matches the required type
+      // This is safe because our schema validation already ensures all required fields are present
+      const bugReportData: BugReportFormData = {
+        title: data.title,
+        description: data.description,
+        steps: data.steps || '',
+        severity: data.severity as 'low' | 'medium' | 'high',
+        reporterName: data.reporterName,
+        reporterEmail: data.reporterEmail,
+      };
+      
+      await submitBugReport(bugReportData);
       form.reset();
       toast.success('Bug report submitted', {
         description: 'Thank you for helping us improve ClickProp.'
