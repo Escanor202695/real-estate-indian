@@ -69,16 +69,175 @@ const sendEmail = async (to, subject, htmlContent) => {
   return info;
 };
 
-// @desc    Register a user
+// @desc    Register a user with OTP verification
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, phone } = req.body;
+    const { name, email, password, phone, otp, sendOtp } = req.body;
     
     // Check if user already exists
     const userExists = await User.findOne({ email });
     
+    // If this is an OTP verification request only
+    if (sendOtp) {
+      // If user already exists with verified status, reject
+      if (userExists && userExists.isVerified) {
+        return res.status(400).json({
+          success: false,
+          message: 'User already exists'
+        });
+      }
+      
+      // Generate random 6-digit OTP
+      const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      // Set OTP expiry time (15 minutes from now)
+      const otpExpiry = Date.now() + 15 * 60 * 1000;
+      
+      // Hash the OTP before storing it
+      const salt = await bcrypt.genSalt(10);
+      const hashedOtp = await bcrypt.hash(generatedOtp, salt);
+      
+      if (userExists) {
+        // Update existing unverified user
+        userExists.registrationOtp = hashedOtp;
+        userExists.registrationOtpExpires = otpExpiry;
+        await userExists.save();
+      } else {
+        // Create temporary user with OTP
+        await User.create({
+          name,
+          email,
+          password,
+          phone,
+          registrationOtp: hashedOtp,
+          registrationOtpExpires: otpExpiry,
+          isVerified: false,
+          isActive: false
+        });
+      }
+      
+      // Send OTP email
+      try {
+        await sendEmail(
+          email,
+          'Verify Your ClickProp Account',
+          `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 5px;">
+            <h2 style="color: #2563eb;">Verify Your ClickProp Account</h2>
+            <p>Hello ${name},</p>
+            <p>Thank you for registering with ClickProp. To complete your registration, please use the following verification code:</p>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <div style="font-size: 24px; letter-spacing: 5px; font-weight: bold; padding: 15px; background-color: #f3f4f6; border-radius: 4px; display: inline-block;">
+                ${generatedOtp}
+              </div>
+            </div>
+            
+            <p>This code will expire in 15 minutes.</p>
+            <p>If you didn't request this code, please ignore this email.</p>
+            
+            <p style="margin-top: 20px;">Thanks,<br>The ClickProp Team</p>
+          </div>
+          `
+        );
+      } catch (err) {
+        console.error('OTP email error:', err);
+        // Continue even if email fails
+      }
+      
+      // Send success response
+      return res.status(200).json({
+        success: true,
+        message: 'Verification code sent to email'
+      });
+    }
+    
+    // If this is the final registration with OTP verification
+    if (otp) {
+      // Find user by email with valid OTP
+      const user = await User.findOne({ 
+        email,
+        registrationOtpExpires: { $gt: Date.now() }
+      });
+      
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired verification code'
+        });
+      }
+      
+      // Verify OTP
+      const isOtpValid = await bcrypt.compare(otp, user.registrationOtp);
+      
+      if (!isOtpValid) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid verification code'
+        });
+      }
+      
+      // Update user to verified status
+      user.isVerified = true;
+      user.isActive = true;
+      user.registrationOtp = undefined;
+      user.registrationOtpExpires = undefined;
+      
+      await user.save();
+      
+      // Generate token
+      const token = generateToken(user._id);
+      
+      // Send welcome email
+      try {
+        await sendEmail(
+          email,
+          'Welcome to ClickProp Real Estate',
+          `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 5px;">
+            <h2 style="color: #2563eb;">Welcome to ClickProp Real Estate!</h2>
+            <p>Hello ${name},</p>
+            <p>Thank you for joining ClickProp - your new home for finding the perfect property.</p>
+            <p>With your new account, you can:</p>
+            <ul>
+              <li>Save your favorite properties</li>
+              <li>Set up property alerts</li>
+              <li>Track your search history</li>
+              <li>Contact property owners directly</li>
+            </ul>
+            <p>Start exploring now!</p>
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/properties" 
+              style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 15px;">
+              Browse Properties
+            </a>
+            <p style="margin-top: 20px;">If you have any questions, feel free to contact our support team.</p>
+            <p>Happy house hunting!</p>
+            <p>The ClickProp Team</p>
+          </div>
+          `
+        );
+      } catch (err) {
+        console.error('Welcome email error:', err);
+        // Don't block registration if email fails
+      }
+      
+      res.status(201).json({
+        success: true,
+        token,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: user.role
+        }
+      });
+      return;
+    }
+    
+    // Legacy registration flow (without OTP) - should not reach here in new flow
     if (userExists) {
       return res.status(400).json({
         success: false,
@@ -91,7 +250,8 @@ exports.register = async (req, res) => {
       name,
       email,
       password,
-      phone
+      phone,
+      isVerified: true // Legacy user is automatically verified
     });
     
     // Generate token

@@ -40,6 +40,9 @@ const bcrypt = require('bcryptjs');
  *         isActive:
  *           type: boolean
  *           description: Whether the user account is active
+ *         isVerified:
+ *           type: boolean
+ *           description: Whether the user email is verified
  *         location:
  *           type: object
  *           properties:
@@ -85,10 +88,20 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
   resetPasswordOtp: {
     type: String
   },
   resetPasswordExpires: {
+    type: Date
+  },
+  registrationOtp: {
+    type: String
+  },
+  registrationOtpExpires: {
     type: Date
   },
   location: {

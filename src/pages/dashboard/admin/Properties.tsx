@@ -1,151 +1,240 @@
 
-import React, { useState } from "react";
-import PropertiesManagementTab from "@/components/dashboard/admin/PropertiesManagementTab";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileJson, Upload } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { importProperties } from "@/services/propertyService";
-import { useQueryClient } from "@tanstack/react-query";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Button } from '@/components/ui/button';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Pencil, Trash2, Plus, Upload, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { getProperties, deleteProperty } from '@/services/propertyService';
+import PropertyForm from '@/components/properties/PropertyForm';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 
-const Properties = () => {
-  const [isUploading, setIsUploading] = useState(false);
-  const { toast } = useToast();
+const PropertiesManagement = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentProperty, setCurrentProperty] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importData, setImportData] = useState('');
+  
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  // Fetch properties
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['adminProperties'],
+    queryFn: () => getProperties(),
+  });
 
-    setIsUploading(true);
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteProperty(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
+      toast.success('Property deleted successfully');
+      setShowDeleteDialog(false);
+    },
+    onError: () => {
+      toast.error('Failed to delete property');
+    }
+  });
 
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      try {
-        const jsonData = JSON.parse(e.target?.result as string);
-
-        if (!Array.isArray(jsonData)) {
-          toast({
-            title: "Invalid JSON format",
-            description: "The JSON file must contain an array of properties",
-            variant: "destructive",
-          });
-          setIsUploading(false);
-          return;
-        }
-
-        console.log("Properties to import:", jsonData);
-        console.log("First property example:", jsonData[0]);
-
-        toast({
-          title: "Processing data",
-          description: `Preparing ${jsonData.length} properties for import...`,
-        });
-
-        // Send the data to the API
-        importProperties(jsonData)
-          .then((response) => {
-            console.log("Import response:", response);
-            toast({
-              title: "Upload successful",
-              description: `${response.count || response.data?.length || 'All'} properties imported successfully`,
-            });
-            queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
-            
-            // Reset the file input
-            if (event.target) {
-              event.target.value = "";
-            }
-          })
-          .catch((error) => {
-            console.error("Import error:", error);
-            let errorMessage = "Failed to import properties";
-            
-            if (error.response && error.response.data && error.response.data.message) {
-              errorMessage += `: ${error.response.data.message}`;
-            } else if (error.message) {
-              errorMessage += `: ${error.message}`;
-            }
-            
-            toast({
-              title: "Upload failed",
-              description: errorMessage,
-              variant: "destructive",
-            });
-          })
-          .finally(() => {
-            setIsUploading(false);
-          });
-      } catch (error) {
-        toast({
-          title: "Error parsing JSON",
-          description: "Please check your file format and try again",
-          variant: "destructive",
-        });
-        setIsUploading(false);
-      }
-    };
-
-    reader.onerror = () => {
-      toast({
-        title: "Error reading file",
-        description: "There was an error reading the file",
-        variant: "destructive",
-      });
-      setIsUploading(false);
-    };
-
-    reader.readAsText(file);
+  const handleAddNew = () => {
+    setCurrentProperty(null);
+    setShowForm(true);
   };
 
+  const handleEdit = (property: any) => {
+    setCurrentProperty(property);
+    setShowForm(true);
+  };
+
+  const handleDelete = (property: any) => {
+    setCurrentProperty(property);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (currentProperty) {
+      deleteMutation.mutate(currentProperty._id);
+    }
+  };
+
+  const handleFormSuccess = () => {
+    setShowForm(false);
+    queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
+  };
+
+  // Filter properties based on search term
+  const filteredProperties = data?.data ? data.data.filter((property: any) => 
+    property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.city.toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">Properties Management</h1>
+    <div className="container mx-auto px-4 py-6">
+      <h1 className="text-2xl font-bold mb-6">Property Management</h1>
 
-      <Card className="mb-6">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-md">Import Properties</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4 items-center">
-            <div className="flex-1">
-              <p className="text-sm text-muted-foreground mb-2">
-                Upload a JSON file containing property data to import multiple
-                properties at once.
-              </p>
-              <p className="text-xs text-muted-foreground">
-                The JSON file should contain an array of property objects with the following fields: 
-                name/title, description, price, bedrooms, bathrooms, location, etc.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                className="relative"
-                disabled={isUploading}
-              >
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  disabled={isUploading}
-                />
-                <FileJson className="h-4 w-4 mr-2" />
-                {isUploading ? "Uploading..." : "Choose JSON"}
-              </Button>
-              {isUploading && (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
-              )}
-            </div>
+      {isError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
+          <AlertDescription>Failed to load properties. Please try again.</AlertDescription>
+        </Alert>
+      )}
+      
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <Input
+          placeholder="Search properties..."
+          className="max-w-sm"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        
+        <div className="flex flex-wrap gap-3">
+          <Button 
+            onClick={handleAddNew}
+            className="bg-clickprop-blue hover:bg-clickprop-blue-dark"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add Property
+          </Button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-4">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+      ) : (
+        <div className="bg-white rounded-md shadow overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProperties.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      No properties found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredProperties.map((property: any) => (
+                    <TableRow key={property._id}>
+                      <TableCell className="font-medium">{property.title}</TableCell>
+                      <TableCell>${property.price.toLocaleString()}</TableCell>
+                      <TableCell>{property.city}, {property.state}</TableCell>
+                      <TableCell>{property.propertyType}</TableCell>
+                      <TableCell>{property.listingType}</TableCell>
+                      <TableCell className="text-right">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleEdit(property)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDelete(property)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      <PropertiesManagementTab />
+      {/* Property form dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {currentProperty ? 'Edit Property' : 'Add New Property'}
+            </DialogTitle>
+            <DialogDescription>
+              {currentProperty 
+                ? 'Update the property details below'
+                : 'Fill in the property details below'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <PropertyForm
+            property={currentProperty}
+            onSuccess={handleFormSuccess}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the property "{currentProperty?.title}"?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
-export default Properties;
+export default PropertiesManagement;
