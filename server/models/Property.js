@@ -104,6 +104,81 @@ const mongoose = require('mongoose');
  *           type: string
  *           format: date-time
  *           description: Last update timestamp
+ *         // External data fields
+ *         external_id:
+ *           type: string
+ *           description: External property ID
+ *         url:
+ *           type: string
+ *           description: Original listing URL
+ *         name:
+ *           type: string
+ *           description: Property name/title from external source
+ *         posted_date:
+ *           type: string
+ *           description: Date when property was posted
+ *         price_per_sq_ft:
+ *           type: number
+ *           description: Price per square foot
+ *         currency:
+ *           type: string
+ *           description: Currency symbol
+ *         seo_description:
+ *           type: string
+ *           description: SEO optimized description
+ *         landmark_details:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Details about nearby landmarks
+ *         landmark:
+ *           type: string
+ *           description: Primary landmark
+ *         owner_name:
+ *           type: string
+ *           description: Name of the property owner
+ *         company_name:
+ *           type: string
+ *           description: Name of the company/builder
+ *         carpet_area:
+ *           type: number
+ *           description: Carpet area
+ *         land_area_unit:
+ *           type: string
+ *           description: Unit for land area
+ *         balconies:
+ *           type: number
+ *           description: Number of balconies
+ *         facing:
+ *           type: string
+ *           description: Direction the property is facing
+ *         floors:
+ *           type: number
+ *           description: Number of floors
+ *         city_name:
+ *           type: string
+ *           description: Name of city
+ *         address:
+ *           type: string
+ *           description: Complete address
+ *         covered_area:
+ *           type: number
+ *           description: Covered area
+ *         carp_area_unit:
+ *           type: string
+ *           description: Unit for carpet area
+ *         cov_area_unit:
+ *           type: string
+ *           description: Unit for covered area
+ *         operating_since:
+ *           type: string
+ *           description: When the property has been operating since
+ *         image_url:
+ *           type: string
+ *           description: Main image URL
+ *         from_url:
+ *           type: string
+ *           description: Source URL
  */
 const PropertySchema = new mongoose.Schema({
   title: {
@@ -175,7 +250,33 @@ const PropertySchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  
+  // External data fields
+  external_id: String,
+  url: String,
+  name: String,
+  posted_date: String,
+  price_per_sq_ft: Number,
+  currency: String,
+  seo_description: String,
+  landmark_details: [String],
+  landmark: String,
+  owner_name: String,
+  company_name: String,
+  carpet_area: Number,
+  land_area_unit: String,
+  balconies: Number,
+  facing: String,
+  floors: Number,
+  city_name: String,
+  address: String,
+  covered_area: Number,
+  carp_area_unit: String,
+  cov_area_unit: String,
+  operating_since: String,
+  image_url: String,
+  from_url: String
 });
 
 module.exports = mongoose.model('Property', PropertySchema);

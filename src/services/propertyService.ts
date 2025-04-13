@@ -87,7 +87,7 @@ export const importProperties = async (propertiesData: any[]) => {
   }
 };
 
-// Added function to upload JSON files directly
+// File upload function for JSON files
 export const uploadPropertiesFile = async (file: File) => {
   try {
     const formData = new FormData();
@@ -98,7 +98,9 @@ export const uploadPropertiesFile = async (file: File) => {
     const response = await api.post('/properties/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      // Add longer timeout for large files
+      timeout: 60000 // 60 seconds
     });
     
     console.log('Upload API response:', response.data);

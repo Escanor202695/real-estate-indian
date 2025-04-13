@@ -1,3 +1,4 @@
+
 const Property = require('../models/Property');
 const City = require('../models/City');
 
@@ -247,20 +248,21 @@ exports.uploadPropertiesFile = async (req, res) => {
     try {
       properties = JSON.parse(req.file.buffer.toString());
       console.log(`Parsed ${properties.length} properties from file`);
+      
+      // Handle both array and single object formats
+      if (!Array.isArray(properties)) {
+        if (typeof properties === 'object') {
+          properties = [properties]; // Convert single object to array
+          console.log('Converted single object to array');
+        } else {
+          throw new Error('Invalid JSON format: must be an object or array');
+        }
+      }
     } catch (err) {
       console.error('JSON parsing error:', err);
       return res.status(400).json({
         success: false,
         message: 'Invalid JSON format. Please check your file.'
-      });
-    }
-
-    // Verify we have an array
-    if (!Array.isArray(properties)) {
-      console.error('Not an array:', typeof properties);
-      return res.status(400).json({
-        success: false,
-        message: 'The JSON file must contain an array of properties'
       });
     }
 
@@ -274,10 +276,76 @@ exports.uploadPropertiesFile = async (req, res) => {
     // Log a sample property
     console.log('Sample property from file:', JSON.stringify(properties[0], null, 2));
     
-    // Filter valid properties (only required fields: title, description, type, status, price, size)
-    const validProperties = properties.filter(property => {
-      if (!property || typeof property !== 'object') return false;
+    // Map external format to our schema format
+    const mappedProperties = properties.map(prop => {
+      // Extract type from property name or use default
+      let type = 'flat'; // default
+      if (prop.name) {
+        const lowerName = prop.name.toLowerCase();
+        if (lowerName.includes('villa')) type = 'villa';
+        else if (lowerName.includes('house')) type = 'house';
+        else if (lowerName.includes('plot')) type = 'plot';
+        else if (lowerName.includes('commercial')) type = 'commercial';
+        else if (lowerName.includes('pg')) type = 'pg';
+        else if (lowerName.includes('apartment') || lowerName.includes('flat')) type = 'flat';
+      }
       
+      // Determine status (sale/rent) from property name or URL
+      let status = 'sale'; // default
+      if ((prop.name && prop.name.toLowerCase().includes('rent')) || 
+          (prop.url && prop.url.toLowerCase().includes('rent'))) {
+        status = 'rent';
+      }
+      
+      return {
+        title: prop.name || prop.title || 'Untitled Property',
+        description: prop.description || prop.seo_description || 'No description available',
+        type: type,
+        status: status,
+        price: prop.price || 0,
+        size: prop.covered_area || prop.size || 0,
+        bedrooms: prop.bedrooms || null,
+        bathrooms: prop.bathrooms || null,
+        location: {
+          address: prop.address || null,
+          city: prop.city_name || null,
+          coordinates: prop.location ? {
+            lat: parseFloat(prop.location.split(',')[0]) || null,
+            lng: parseFloat(prop.location.split(',')[1]) || null
+          } : null
+        },
+        amenities: Array.isArray(prop.amenities) ? prop.amenities : [],
+        images: prop.image_url ? [prop.image_url] : [],
+        external_id: prop.id || null,
+        url: prop.url || null,
+        name: prop.name || null,
+        posted_date: prop.posted_date || null,
+        price_per_sq_ft: prop.price_per_sq_ft || null,
+        currency: prop.currency || null,
+        seo_description: prop.seo_description || null,
+        landmark_details: prop.landmark_details || [],
+        landmark: prop.landmark || null,
+        owner_name: prop.owner_name || null,
+        company_name: prop.company_name || null,
+        carpet_area: prop.carpet_area || null,
+        land_area_unit: prop.land_area_unit || null,
+        balconies: prop.balconies || null,
+        facing: prop.facing || null,
+        floors: prop.floors || null,
+        city_name: prop.city_name || null,
+        covered_area: prop.covered_area || null,
+        carp_area_unit: prop.carp_area_unit || null,
+        cov_area_unit: prop.cov_area_unit || null,
+        operating_since: prop.operating_since || null,
+        image_url: prop.image_url || null,
+        from_url: prop.from_url || null
+      };
+    });
+    
+    console.log(`Mapped ${mappedProperties.length} properties`);
+    
+    // Filter valid properties (only required fields: title, description, type, status, price, size)
+    const validProperties = mappedProperties.filter(property => {
       const hasRequiredFields = 
         property.title && 
         typeof property.title === 'string' &&
@@ -292,10 +360,14 @@ exports.uploadPropertiesFile = async (req, res) => {
         property.size !== undefined && 
         !isNaN(Number(property.size));
       
+      if (!hasRequiredFields) {
+        console.log('Invalid property:', property.title || 'unnamed', 'Missing required fields');
+      }
+      
       return hasRequiredFields;
     });
 
-    console.log(`Found ${validProperties.length} valid properties out of ${properties.length}`);
+    console.log(`Found ${validProperties.length} valid properties out of ${mappedProperties.length}`);
 
     if (validProperties.length === 0) {
       return res.status(400).json({
@@ -314,6 +386,12 @@ exports.uploadPropertiesFile = async (req, res) => {
         if (property.location && property.location.city) {
           await City.findOneAndUpdate(
             { name: property.location.city },
+            { $inc: { propertyCount: 1 } },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          );
+        } else if (property.city_name) {
+          await City.findOneAndUpdate(
+            { name: property.city_name },
             { $inc: { propertyCount: 1 } },
             { upsert: true, new: true, setDefaultsOnInsert: true }
           );
@@ -384,8 +462,76 @@ exports.importProperties = async (req, res) => {
       console.log('Sample property received:', JSON.stringify(properties[0], null, 2));
     }
     
-    // Validate required fields for each property - only the updated required fields
-    const validProperties = properties.filter(property => {
+    // Map external format to our schema format - similar to uploadPropertiesFile
+    const mappedProperties = properties.map(prop => {
+      // Extract type from property name or use default
+      let type = 'flat'; // default
+      if (prop.name) {
+        const lowerName = prop.name.toLowerCase();
+        if (lowerName.includes('villa')) type = 'villa';
+        else if (lowerName.includes('house')) type = 'house';
+        else if (lowerName.includes('plot')) type = 'plot';
+        else if (lowerName.includes('commercial')) type = 'commercial';
+        else if (lowerName.includes('pg')) type = 'pg';
+        else if (lowerName.includes('apartment') || lowerName.includes('flat')) type = 'flat';
+      }
+      
+      // Determine status (sale/rent) from property name or URL
+      let status = 'sale'; // default
+      if ((prop.name && prop.name.toLowerCase().includes('rent')) || 
+          (prop.url && prop.url.toLowerCase().includes('rent'))) {
+        status = 'rent';
+      }
+      
+      return {
+        title: prop.name || prop.title || 'Untitled Property',
+        description: prop.description || prop.seo_description || 'No description available',
+        type: type,
+        status: status,
+        price: prop.price || 0,
+        size: prop.covered_area || prop.size || 0,
+        bedrooms: prop.bedrooms || null,
+        bathrooms: prop.bathrooms || null,
+        location: {
+          address: prop.address || null,
+          city: prop.city_name || null,
+          coordinates: prop.location ? {
+            lat: parseFloat(prop.location.split(',')[0]) || null,
+            lng: parseFloat(prop.location.split(',')[1]) || null
+          } : null
+        },
+        amenities: Array.isArray(prop.amenities) ? prop.amenities : [],
+        images: prop.image_url ? [prop.image_url] : [],
+        external_id: prop.id || null,
+        url: prop.url || null,
+        name: prop.name || null,
+        posted_date: prop.posted_date || null,
+        price_per_sq_ft: prop.price_per_sq_ft || null,
+        currency: prop.currency || null,
+        seo_description: prop.seo_description || null,
+        landmark_details: prop.landmark_details || [],
+        landmark: prop.landmark || null,
+        owner_name: prop.owner_name || null,
+        company_name: prop.company_name || null,
+        carpet_area: prop.carpet_area || null,
+        land_area_unit: prop.land_area_unit || null,
+        balconies: prop.balconies || null,
+        facing: prop.facing || null,
+        floors: prop.floors || null,
+        city_name: prop.city_name || null,
+        covered_area: prop.covered_area || null,
+        carp_area_unit: prop.carp_area_unit || null,
+        cov_area_unit: prop.cov_area_unit || null,
+        operating_since: prop.operating_since || null,
+        image_url: prop.image_url || null,
+        from_url: prop.from_url || null
+      };
+    });
+    
+    console.log(`Mapped ${mappedProperties.length} properties`);
+    
+    // Validate required fields for each property
+    const validProperties = mappedProperties.filter(property => {
       if (!property.title || 
           !property.description ||
           !property.type || 
@@ -396,7 +542,6 @@ exports.importProperties = async (req, res) => {
         return false;
       }
       
-      // All other fields are optional now
       return true;
     });
     
@@ -418,6 +563,12 @@ exports.importProperties = async (req, res) => {
       if (property.location && property.location.city) {
         await City.findOneAndUpdate(
           { name: property.location.city },
+          { $inc: { propertyCount: 1 } },
+          { upsert: true, new: true, setDefaultsOnInsert: true }
+        );
+      } else if (property.city_name) {
+        await City.findOneAndUpdate(
+          { name: property.city_name },
           { $inc: { propertyCount: 1 } },
           { upsert: true, new: true, setDefaultsOnInsert: true }
         );
