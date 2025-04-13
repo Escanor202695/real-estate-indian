@@ -1,59 +1,55 @@
-
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  Users, 
-  Building2, 
-  MapPin, 
+import React from "react";
+import { Link, useLocation } from "react-router-dom";
+import {
+  Home,
+  Users,
+  Building2,
+  MapPin,
   Settings,
   LogOut,
-  Bug
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+  Bug,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const AdminSidebar = () => {
   const location = useLocation();
-  
+
   const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    return (
+      location.pathname === path || location.pathname.startsWith(`${path}/`)
+    );
   };
-  
+
   const menuItems = [
-    { 
-      name: 'Dashboard', 
-      path: '/admin', 
-      icon: Home 
+    {
+      name: "Dashboard",
+      path: "/admin",
+      icon: Home,
     },
-    { 
-      name: 'Users', 
-      path: '/admin/users', 
-      icon: Users 
+    {
+      name: "Users",
+      path: "/admin/users",
+      icon: Users,
     },
-    { 
-      name: 'Properties', 
-      path: '/admin/properties', 
-      icon: Building2 
+    {
+      name: "Properties",
+      path: "/admin/properties",
+      icon: Building2,
     },
-    { 
-      name: 'Bug Reports', 
-      path: '/admin/bugs', 
-      icon: Bug 
+    {
+      name: "Bug Reports",
+      path: "/admin/bugs",
+      icon: Bug,
     },
-    { 
-      name: 'Settings', 
-      path: '/admin/settings', 
-      icon: Settings 
-    }
   ];
-  
+
   return (
     <div className="bg-white rounded-lg shadow-sm overflow-hidden">
       <div className="p-4 bg-clickprop-blue text-white">
         <h2 className="text-xl font-bold">Admin Panel</h2>
         <p className="text-sm opacity-75">Manage your website</p>
       </div>
-      
+
       <nav className="p-4">
         <ul className="space-y-1">
           {menuItems.map((item) => (
@@ -73,7 +69,7 @@ const AdminSidebar = () => {
             </li>
           ))}
         </ul>
-        
+
         <div className="mt-8 pt-4 border-t border-gray-200">
           <Link
             to="/logout"
