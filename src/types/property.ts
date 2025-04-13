@@ -7,22 +7,22 @@ export interface Property {
   status: string; // sale or rent
   price: number;
   size: number; // in sq ft
-  bedrooms: number;
-  bathrooms: number;
-  location: {
-    address: string;
-    city: string;
-    state: string;
-    pincode?: string; // Made optional to match server model
+  bedrooms?: number;
+  bathrooms?: number;
+  location?: {
+    address?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
     coordinates?: {
       lat: number;
       lng: number;
     };
   };
-  amenities: string[];
-  features: string[];
-  images: string[]; // URLs
-  externalLink: string; // URL to external property listing
+  amenities?: string[];
+  features?: string[];
+  images?: string[]; // URLs
+  externalLink?: string; // URL to external property listing
   owner?: {
     name: string;
     contact: string;
@@ -30,8 +30,8 @@ export interface Property {
   };
   createdAt?: Date;
   updatedAt?: Date;
-  isActive: boolean;
-  views: number;
+  isActive?: boolean;
+  views?: number;
   
   // Additional fields to match the imported JSON
   url?: string;
