@@ -142,22 +142,10 @@ const PropertySchema = new mongoose.Schema({
     required: false
   },
   location: {
-    address: {
-      type: String,
-      required: false
-    },
-    city: {
-      type: String,
-      required: false
-    },
-    state: {
-      type: String,
-      required: false
-    },
-    pincode: {
-      type: String,
-      required: false
-    },
+    address: String,
+    city: String,
+    state: String,
+    pincode: String,
     coordinates: {
       lat: Number,
       lng: Number
@@ -166,10 +154,7 @@ const PropertySchema = new mongoose.Schema({
   amenities: [String],
   features: [String],
   images: [String],
-  externalLink: {
-    type: String,
-    required: false
-  },
+  externalLink: String,
   owner: {
     name: String,
     contact: String,

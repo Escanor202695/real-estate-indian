@@ -230,10 +230,14 @@ exports.clearRecentSearches = async (req, res) => {
 // @access  Admin/Cron
 exports.processPropertyAlerts = async (req, res) => {
   try {
+    console.log('Starting to process property alerts');
+    
     // Get all user preferences with active email notifications
     const userPreferences = await UserPreference.find({
       'savedSearches.notifyByEmail': true
     }).populate('user');
+    
+    console.log(`Found ${userPreferences.length} users with active notifications`);
     
     let alertsProcessed = 0;
     let emailsSent = 0;
@@ -243,12 +247,14 @@ exports.processPropertyAlerts = async (req, res) => {
       const user = preference.user;
       
       if (!user || !user.isActive) {
+        console.log('Skipping inactive user');
         continue;
       }
       
       // Process each saved search with notifications enabled
       for (const search of preference.savedSearches.filter(s => s.notifyByEmail)) {
         alertsProcessed++;
+        console.log(`Processing alert for ${user.email}, search: ${search.location || 'Any location'}`);
         
         // Build query to find matching properties
         const query = {};
@@ -282,8 +288,11 @@ exports.processPropertyAlerts = async (req, res) => {
           query.bedrooms = { $gte: search.bedrooms };
         }
         
+        console.log('Property search query:', JSON.stringify(query));
+        
         // Find matching properties
         const matchingProperties = await Property.find(query).limit(10);
+        console.log(`Found ${matchingProperties.length} matching properties`);
         
         // If matching properties found, send email notification
         if (matchingProperties.length > 0) {
@@ -294,7 +303,7 @@ exports.processPropertyAlerts = async (req, res) => {
             matchingProperties.forEach(property => {
               const imageUrl = property.images && property.images.length > 0 ? 
                 property.images[0] : 
-                `${process.env.FRONTEND_URL}/placeholder.svg`;
+                `${process.env.FRONTEND_URL || 'http://localhost:3000'}/placeholder.svg`;
               
               propertiesHtml += `
                 <div style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #e1e1e1;">
@@ -304,10 +313,10 @@ exports.processPropertyAlerts = async (req, res) => {
                     </div>
                     <div style="flex: 1;">
                       <h3 style="margin: 0 0 5px 0; font-size: 16px;">${property.title}</h3>
-                      <p style="margin: 0 0 5px 0; font-size: 14px;">${property.location.address}, ${property.location.city}</p>
-                      <p style="margin: 0 0 5px 0; font-size: 14px;">${property.bedrooms} bed | ${property.bathrooms} bath | ${property.size} sq ft</p>
+                      <p style="margin: 0 0 5px 0; font-size: 14px;">${property.location?.address || ''}, ${property.location?.city || 'Location not specified'}</p>
+                      <p style="margin: 0 0 5px 0; font-size: 14px;">${property.bedrooms || 'N/A'} bed | ${property.bathrooms || 'N/A'} bath | ${property.size} sq ft</p>
                       <p style="margin: 0 0 10px 0; font-size: 16px; font-weight: bold;">₹${property.price.toLocaleString()}</p>
-                      <a href="${process.env.FRONTEND_URL}/property/${property._id}" 
+                      <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/property/${property._id}" 
                          style="color: #2563eb; text-decoration: none; font-size: 14px;">
                         View Property
                       </a>
@@ -335,6 +344,8 @@ exports.processPropertyAlerts = async (req, res) => {
             if (search.maxPrice) searchParams.append('maxPrice', search.maxPrice.toString());
             if (search.bedrooms) searchParams.append('bedrooms', search.bedrooms.toString());
             
+            console.log(`Sending email to ${user.email}`);
+            
             await sendEmail(
               user.email,
               `New Properties Found: ${matchingProperties.length} listings match your search`,
@@ -352,7 +363,7 @@ exports.processPropertyAlerts = async (req, res) => {
                 </div>
                 
                 <div style="margin-top: 20px; text-align: center;">
-                  <a href="${process.env.FRONTEND_URL}/properties?${searchParams.toString()}" 
+                  <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/properties?${searchParams.toString()}" 
                      style="display: inline-block; background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
                     View All Matching Properties
                   </a>
@@ -361,15 +372,20 @@ exports.processPropertyAlerts = async (req, res) => {
                 <p style="margin-top: 20px; font-size: 12px; color: #6b7280; text-align: center;">
                   You are receiving this email because you set up a property alert on ClickProp.
                   <br>
-                  To manage your alerts, visit your <a href="${process.env.FRONTEND_URL}/dashboard/property-alerts" style="color: #2563eb;">account settings</a>.
+                  To manage your alerts, visit your <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/dashboard/property-alerts" style="color: #2563eb;">account settings</a>.
                 </p>
               </div>
               `
             );
             
             emailsSent++;
+            console.log(`Email sent successfully to ${user.email}`);
             
             // Create notification in user preferences
+            if (!preference.notifications) {
+              preference.notifications = [];
+            }
+            
             preference.notifications.push({
               message: `We found ${matchingProperties.length} new properties matching your saved search for ${search.location || 'properties'}`,
               read: false,
@@ -377,12 +393,17 @@ exports.processPropertyAlerts = async (req, res) => {
             });
             
             await preference.save();
+            console.log('Notification saved to user preferences');
           } catch (err) {
             console.error(`Error sending alert email to ${user.email}:`, err);
           }
+        } else {
+          console.log('No matching properties found for this search');
         }
       }
     }
+    
+    console.log(`Alerts process complete: ${alertsProcessed} alerts processed, ${emailsSent} emails sent`);
     
     res.status(200).json({
       success: true,
