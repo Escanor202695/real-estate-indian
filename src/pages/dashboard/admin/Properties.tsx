@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { 
@@ -18,12 +18,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Trash2, Upload, AlertCircle, SquareCheck } from 'lucide-react';
+import { Trash2, Upload, AlertCircle, SquareCheck, FileUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { getProperties, deleteProperty, importProperties } from '@/services/propertyService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Pagination,
@@ -39,10 +38,10 @@ const PropertiesManagement = () => {
   const [currentProperty, setCurrentProperty] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
-  const [importData, setImportData] = useState('');
   const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const queryClient = useQueryClient();
 
@@ -94,7 +93,9 @@ const PropertiesManagement = () => {
       queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
       toast.success(`Successfully imported ${result.count} properties`);
       setShowImportDialog(false);
-      setImportData('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     },
     onError: (error: any) => {
       toast.error(`Import failed: ${error.response?.data?.message || 'Unknown error'}`);
@@ -116,19 +117,33 @@ const PropertiesManagement = () => {
     setShowImportDialog(true);
   };
 
-  const handleImportSubmit = () => {
-    try {
-      const parsedData = JSON.parse(importData);
-      
-      if (!Array.isArray(parsedData)) {
-        toast.error('Data must be an array of properties');
-        return;
-      }
-
-      importMutation.mutate(parsedData);
-    } catch (error) {
-      toast.error('Invalid JSON format');
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const parsedData = JSON.parse(content);
+        
+        if (!Array.isArray(parsedData)) {
+          toast.error('Data must be an array of properties');
+          return;
+        }
+
+        importMutation.mutate(parsedData);
+      } catch (error) {
+        toast.error('Invalid JSON format in uploaded file');
+      }
+    };
+    reader.onerror = () => {
+      toast.error('Error reading file');
+    };
+    
+    reader.readAsText(file);
   };
 
   // Function to toggle selection of a property
@@ -289,32 +304,41 @@ const PropertiesManagement = () => {
                 <PaginationContent>
                   {/* Previous page button */}
                   <PaginationItem>
-                    <PaginationPrevious 
+                    <Button 
+                      variant="outline" 
+                      size="sm"
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
+                      className={currentPage === 1 ? "opacity-50" : ""}
+                    >
+                      Previous
+                    </Button>
                   </PaginationItem>
 
                   {/* Page numbers */}
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                     <PaginationItem key={page}>
-                      <PaginationLink
+                      <Button 
+                        variant={page === currentPage ? "default" : "outline"}
+                        size="sm"
                         onClick={() => handlePageChange(page)}
-                        isActive={page === currentPage}
                       >
                         {page}
-                      </PaginationLink>
+                      </Button>
                     </PaginationItem>
                   ))}
 
                   {/* Next page button */}
                   <PaginationItem>
-                    <PaginationNext
+                    <Button 
+                      variant="outline" 
+                      size="sm"
                       onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages} 
-                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                    />
+                      disabled={currentPage === totalPages}
+                      className={currentPage === totalPages ? "opacity-50" : ""}
+                    >
+                      Next
+                    </Button>
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
@@ -356,21 +380,26 @@ const PropertiesManagement = () => {
       <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Import Properties from JSON</DialogTitle>
+            <DialogTitle>Import Properties from JSON File</DialogTitle>
             <DialogDescription>
-              Paste your JSON array of properties below. Each property should include title, type, status, price, and location fields.
+              Select a JSON file containing an array of properties to import.
             </DialogDescription>
           </DialogHeader>
           
           <div className="py-4">
-            <Textarea 
-              value={importData}
-              onChange={(e) => setImportData(e.target.value)}
-              placeholder='[{"title": "Example Property", "type": "flat", "status": "sale", "price": 100000, "location": {"address": "123 Main St", "city": "Example City", "state": "Example State"}}]'
-              className="min-h-[300px] font-mono text-sm"
-            />
-            <div className="mt-2 text-sm text-gray-500">
-              <p>Required fields: title, type, status, price, location (with address, city, state).</p>
+            <div className="grid w-full items-center gap-4">
+              <div className="flex flex-col gap-2">
+                <Input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileUpload}
+                  className="cursor-pointer"
+                />
+                <p className="text-sm text-muted-foreground">
+                  The JSON file should contain an array of property objects.
+                </p>
+              </div>
             </div>
           </div>
           
@@ -383,15 +412,23 @@ const PropertiesManagement = () => {
               Cancel
             </Button>
             <Button 
-              onClick={handleImportSubmit}
-              disabled={importMutation.isPending || !importData.trim()}
+              variant="default"
+              disabled={importMutation.isPending}
               className="bg-green-600 hover:bg-green-700 text-white"
             >
-              {importMutation.isPending ? 'Importing...' : 'Import Properties'}
+              {importMutation.isPending ? 'Importing...' : 'Upload JSON File'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Hidden file input for direct trigger */}
+      <input 
+        type="file" 
+        accept=".json" 
+        className="hidden" 
+        ref={fileInputRef}
+      />
     </div>
   );
 };
