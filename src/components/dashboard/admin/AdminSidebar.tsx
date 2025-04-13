@@ -36,11 +36,6 @@ const AdminSidebar = () => {
       icon: Building2 
     },
     { 
-      name: 'Cities', 
-      path: '/admin/cities', 
-      icon: MapPin 
-    },
-    { 
       name: 'Bug Reports', 
       path: '/admin/bugs', 
       icon: Bug 

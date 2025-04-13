@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Menu, X, User, Home, Building, UserCircle, Settings, LayoutDashboard } from 'lucide-react';
+import { Menu, X, Home, Building, UserCircle, Settings, LayoutDashboard } from 'lucide-react';
 import { isLoggedIn, isAdmin, logout, getCurrentUser } from '@/services/authService';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from 'sonner';
@@ -78,14 +78,6 @@ const Navbar = () => {
               <Building size={18} />
               <span>Properties</span>
             </Link>
-            
-            {userIsAdmin && (
-              <Link to="/admin" className="px-3 py-2 text-clickprop-text-secondary hover:text-clickprop-blue flex items-center space-x-1">
-                <LayoutDashboard size={18} />
-                <span>Admin Dashboard</span>
-              </Link>
-            )}
-            
             {isLoading ? (
               <div className="ml-4 h-9 w-24 bg-gray-200 animate-pulse rounded"></div>
             ) : userLoggedIn ? (
