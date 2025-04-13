@@ -71,14 +71,16 @@ const PropertiesManagementTab = () => {
       itemsPerPage,
     ],
     queryFn: () => getProperties(buildQueryParams()),
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to fetch properties data",
-        variant: "destructive",
-      });
-    },
   });
+
+  // Show toast if there's an error
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Failed to fetch properties data",
+      variant: "destructive",
+    });
+  }
 
   // Delete property mutation
   const deleteMutation = useMutation({
