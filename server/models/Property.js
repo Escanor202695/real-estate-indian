@@ -14,10 +14,6 @@ const mongoose = require('mongoose');
  *         - status
  *         - price
  *         - size
- *         - bedrooms
- *         - bathrooms
- *         - location
- *         - externalLink
  *       properties:
  *         _id:
  *           type: string
@@ -50,10 +46,6 @@ const mongoose = require('mongoose');
  *           description: Number of bathrooms
  *         location:
  *           type: object
- *           required:
- *             - address
- *             - city
- *             - state
  *           properties:
  *             address:
  *               type: string
@@ -143,24 +135,24 @@ const PropertySchema = new mongoose.Schema({
   },
   bedrooms: {
     type: Number,
-    required: true
+    required: false
   },
   bathrooms: {
     type: Number,
-    required: true
+    required: false
   },
   location: {
     address: {
       type: String,
-      required: true
+      required: false
     },
     city: {
       type: String,
-      required: true
+      required: false
     },
     state: {
       type: String,
-      required: true
+      required: false
     },
     pincode: {
       type: String,
@@ -176,7 +168,7 @@ const PropertySchema = new mongoose.Schema({
   images: [String],
   externalLink: {
     type: String,
-    required: true
+    required: false
   },
   owner: {
     name: String,

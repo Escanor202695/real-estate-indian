@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import PropertiesManagementTab from "@/components/dashboard/admin/PropertiesManagementTab";
 import { Button } from "@/components/ui/button";
@@ -34,16 +35,47 @@ const Properties = () => {
           return;
         }
 
+        // Validate required fields
+        const invalidProperties = jsonData.filter(
+          (property) => 
+            !property.title || 
+            !property.description || 
+            !property.type || 
+            !property.status || 
+            typeof property.price !== 'number' ||
+            typeof property.size !== 'number'
+        );
+
+        if (invalidProperties.length > 0) {
+          toast({
+            title: `${invalidProperties.length} properties have missing required fields`,
+            description: "Each property must have title, description, type, status, price, and size",
+            variant: "destructive",
+          });
+          
+          if (invalidProperties.length === jsonData.length) {
+            setIsUploading(false);
+            return;
+          }
+        }
+
         console.log("Properties to import:", jsonData);
         console.log("First property example:", jsonData[0]);
 
         toast({
           title: "Processing data",
-          description: `Preparing ${jsonData.length} properties for import...`,
+          description: `Preparing ${jsonData.length - invalidProperties.length} properties for import...`,
         });
 
         // Send the data to the API
-        importProperties(jsonData)
+        importProperties(jsonData.filter(p => 
+          p.title && 
+          p.description && 
+          p.type && 
+          p.status && 
+          typeof p.price === 'number' && 
+          typeof p.size === 'number'
+        ))
           .then((response) => {
             console.log("Import response:", response);
             toast({
@@ -120,9 +152,7 @@ const Properties = () => {
                 properties at once.
               </p>
               <p className="text-xs text-muted-foreground">
-                The JSON file should contain an array of property objects with
-                the following fields: name/title, description, price, bedrooms,
-                bathrooms, location, etc.
+                <span className="font-semibold">Required fields:</span> title, description, type, status, price, and size. All other fields are optional.
               </p>
             </div>
             <div className="flex items-center gap-2">
