@@ -6,6 +6,8 @@ interface RegisterData {
   email: string;
   password: string;
   phone?: string;
+  otp?: string;
+  sendOtp?: boolean;
 }
 
 interface LoginData {
@@ -22,7 +24,8 @@ interface PasswordResetData {
 
 export const register = async (userData: RegisterData) => {
   const response = await api.post('/auth/register', userData);
-  if (response.data.token) {
+  // Only set token if not in OTP request mode
+  if (response.data.token && !userData.sendOtp) {
     localStorage.setItem('token', response.data.token);
     localStorage.setItem('user', JSON.stringify(response.data.user));
   }
@@ -82,8 +85,15 @@ export const logout = () => {
 };
 
 export const getCurrentUser = async () => {
-  const response = await api.get('/auth/me');
-  return response.data;
+  try {
+    const response = await api.get('/auth/me');
+    return response.data;
+  } catch (error) {
+    // If error, we'll clear the storage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    throw error;
+  }
 };
 
 export const isLoggedIn = () => {

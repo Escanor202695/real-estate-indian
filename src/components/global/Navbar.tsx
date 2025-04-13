@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Menu, X, User, Home, Building, UserCircle, Settings, LayoutDashboard } from 'lucide-react';
 import { isLoggedIn, isAdmin, logout, getCurrentUser } from '@/services/authService';
@@ -9,17 +9,18 @@ import { toast } from 'sonner';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [userLoggedIn, setUserLoggedIn] = useState(false);
-  const [userIsAdmin, setUserIsAdmin] = useState(false);
+  const [userLoggedIn, setUserLoggedIn] = useState(isLoggedIn());
+  const [userIsAdmin, setUserIsAdmin] = useState(isAdmin());
   const [userName, setUserName] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      const loggedIn = isLoggedIn();
-      setUserLoggedIn(loggedIn);
-
-      if (loggedIn) {
+    const fetchUserData = async () => {
+      setIsLoading(true);
+      if (isLoggedIn()) {
+        setUserLoggedIn(true);
         setUserIsAdmin(isAdmin());
         
         try {
@@ -30,12 +31,20 @@ const Navbar = () => {
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
+          // Handle authentication error by logging out
+          logout();
+          setUserLoggedIn(false);
+          setUserIsAdmin(false);
         }
+      } else {
+        setUserLoggedIn(false);
+        setUserIsAdmin(false);
       }
+      setIsLoading(false);
     };
 
-    checkLoginStatus();
-  }, []);
+    fetchUserData();
+  }, [location.pathname]);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -77,7 +86,9 @@ const Navbar = () => {
               </Link>
             )}
             
-            {userLoggedIn ? (
+            {isLoading ? (
+              <div className="ml-4 h-9 w-24 bg-gray-200 animate-pulse rounded"></div>
+            ) : userLoggedIn ? (
               <div className="ml-4 flex items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -155,7 +166,9 @@ const Navbar = () => {
             </Link>
           )}
           
-          {userLoggedIn ? (
+          {isLoading ? (
+            <div className="h-10 w-full bg-gray-200 animate-pulse rounded mt-3"></div>
+          ) : userLoggedIn ? (
             <>
               <Link to="/dashboard" className="block px-3 py-2 text-clickprop-text-secondary hover:text-clickprop-blue flex items-center space-x-2">
                 <UserCircle size={18} />

@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/components/ui/use-toast";
-import { login, getRememberedEmail } from '@/services/authService';
+import { login, getRememberedEmail, isLoggedIn } from '@/services/authService';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,7 +14,15 @@ const Login = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isLoggedIn()) {
+      navigate('/dashboard');
+    }
+  }, [navigate]);
 
   // Check for remembered email on component mount
   useEffect(() => {
@@ -37,7 +45,9 @@ const Login = () => {
         description: "Welcome back to ClickProp!",
       });
       
-      navigate('/dashboard');
+      // Redirect to the page they came from or dashboard
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from);
     } catch (error) {
       console.error('Login error:', error);
       toast({
@@ -118,8 +128,6 @@ const Login = () => {
               {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
           </form>
-
-          {/* Google login section completely removed */}
         </div>
       </div>
     </div>
