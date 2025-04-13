@@ -167,15 +167,6 @@ const PropertiesManagementTab = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Properties Management</CardTitle>
-        <Button
-          className="bg-clickprop-blue hover:bg-clickprop-blue-dark"
-          asChild
-        >
-          <Link to="/admin/properties/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Property
-          </Link>
-        </Button>
       </CardHeader>
       <CardContent>
         <div className="mb-6 flex flex-col sm:flex-row gap-4">
@@ -350,16 +341,6 @@ const PropertiesManagementTab = () => {
                       <TableCell>{property.views || 0}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button size="sm" variant="outline" asChild>
-                            <Link to={`/properties/${property._id}`}>
-                              <Search className="h-4 w-4" />
-                            </Link>
-                          </Button>
-                          <Button size="sm" variant="outline" asChild>
-                            <Link to={`/admin/properties/edit/${property._id}`}>
-                              <Edit className="h-4 w-4" />
-                            </Link>
-                          </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button
