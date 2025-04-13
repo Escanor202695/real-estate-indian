@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
@@ -13,12 +12,13 @@ dotenv.config();
 connectDB();
 
 // Route files
-const propertyRoutes = require('./routes/properties');
-const cityRoutes = require('./routes/cities');
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const adminRoutes = require('./routes/admin');
-const emailRoutes = require('./routes/email');
+const auth = require('./routes/auth');
+const properties = require('./routes/properties');
+const cities = require('./routes/cities');
+const users = require('./routes/users');
+const admin = require('./routes/admin');
+const email = require('./routes/email');
+const bugReports = require('./routes/bugReports');
 
 const app = express();
 
@@ -70,12 +70,13 @@ app.use(cors());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Mount routers
-app.use('/api/properties', propertyRoutes);
-app.use('/api/cities', cityRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api', emailRoutes);
+app.use('/api/auth', auth);
+app.use('/api/properties', properties);
+app.use('/api/cities', cities);
+app.use('/api/users', users);
+app.use('/api/admin', admin);
+app.use('/api/email', email);
+app.use('/api/bug-reports', bugReports);
 
 // Basic route
 app.get('/', (req, res) => {

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,6 +12,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BugIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { isLoggedIn } from '@/services/authService';
+import { submitBugReport } from '@/services/bugReportService';
+import { useNavigate } from 'react-router-dom';
 
 // Define the schema for bug report form
 const bugReportSchema = z.object({
@@ -25,17 +27,10 @@ const bugReportSchema = z.object({
 
 type BugReportFormValues = z.infer<typeof bugReportSchema>;
 
-// Mock API call for submitting bug report
-const submitBugReport = async (data: BugReportFormValues) => {
-  // This would be replaced with a real API call
-  return new Promise((resolve) => {
-    setTimeout(() => resolve({ success: true }), 1000);
-  });
-};
-
 const BugReportForm = () => {
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isUserLoggedIn = isLoggedIn();
+  const navigate = useNavigate();
 
   const form = useForm<BugReportFormValues>({
     resolver: zodResolver(bugReportSchema),
@@ -57,7 +52,10 @@ const BugReportForm = () => {
       toast.success('Bug report submitted', {
         description: 'Thank you for helping us improve ClickProp.'
       });
+      // Redirect to home page after successful submission
+      setTimeout(() => navigate('/'), 2000);
     } catch (error) {
+      console.error('Error submitting bug report:', error);
       toast.error('Error submitting report', {
         description: 'An error occurred. Please try again later.'
       });
