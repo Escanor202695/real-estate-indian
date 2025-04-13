@@ -35,7 +35,8 @@ export interface Property {
   isActive?: boolean;
   views?: number;
   
-  // Additional fields to match the imported JSON
+  // External data fields
+  external_id?: string;
   url?: string;
   name?: string;
   posted_date?: string;
