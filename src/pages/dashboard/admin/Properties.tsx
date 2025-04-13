@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -19,12 +18,21 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Pencil, Trash2, Upload, AlertCircle } from 'lucide-react';
+import { Trash2, Upload, AlertCircle, SquareCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { getProperties, deleteProperty, importProperties } from '@/services/propertyService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 
 const PropertiesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,13 +40,19 @@ const PropertiesManagement = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importData, setImportData] = useState('');
+  const [selectedProperties, setSelectedProperties] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   
   const queryClient = useQueryClient();
 
-  // Fetch properties
+  // Fetch properties with pagination
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['adminProperties'],
-    queryFn: () => getProperties(),
+    queryKey: ['adminProperties', currentPage, itemsPerPage],
+    queryFn: () => getProperties({
+      page: currentPage,
+      limit: itemsPerPage
+    }),
   });
 
   // Delete mutation
@@ -51,6 +65,25 @@ const PropertiesManagement = () => {
     },
     onError: () => {
       toast.error('Failed to delete property');
+    }
+  });
+
+  // Delete multiple properties mutation
+  const deleteMultipleMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      // Delete properties one by one
+      for (const id of ids) {
+        await deleteProperty(id);
+      }
+      return ids;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
+      toast.success(`${selectedProperties.length} properties deleted successfully`);
+      setSelectedProperties([]);
+    },
+    onError: () => {
+      toast.error('Failed to delete some properties');
     }
   });
 
@@ -98,11 +131,47 @@ const PropertiesManagement = () => {
     }
   };
 
+  // Function to toggle selection of a property
+  const togglePropertySelection = (property: any) => {
+    setSelectedProperties(prevSelected => {
+      if (prevSelected.includes(property._id)) {
+        return prevSelected.filter(id => id !== property._id);
+      } else {
+        return [...prevSelected, property._id];
+      }
+    });
+  };
+
+  // Function to toggle selection of all properties
+  const toggleSelectAll = () => {
+    if (selectedProperties.length === filteredProperties.length) {
+      // If all are selected, unselect all
+      setSelectedProperties([]);
+    } else {
+      // Otherwise select all
+      setSelectedProperties(filteredProperties.map((property: any) => property._id));
+    }
+  };
+
+  // Function to delete selected properties
+  const handleDeleteSelected = () => {
+    if (selectedProperties.length > 0) {
+      deleteMultipleMutation.mutate(selectedProperties);
+    }
+  };
+
+  // Pagination functions
+  const totalPages = data?.pages || 1;
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   // Filter properties based on search term
   const filteredProperties = data?.data ? data.data.filter((property: any) => 
     property.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.city.toLowerCase().includes(searchTerm.toLowerCase())
+    property.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.city?.toLowerCase().includes(searchTerm.toLowerCase())
   ) : [];
 
   return (
@@ -133,6 +202,17 @@ const PropertiesManagement = () => {
             <Upload className="h-4 w-4 mr-2" />
             Import Properties JSON
           </Button>
+
+          {selectedProperties.length > 0 && (
+            <Button 
+              onClick={handleDeleteSelected}
+              variant="destructive"
+              disabled={deleteMultipleMutation.isPending}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Selected ({selectedProperties.length})
+            </Button>
+          )}
         </div>
       </div>
 
@@ -150,6 +230,12 @@ const PropertiesManagement = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-12">
+                    <Checkbox 
+                      checked={selectedProperties.length === filteredProperties.length && filteredProperties.length > 0}
+                      onCheckedChange={toggleSelectAll}
+                    />
+                  </TableHead>
                   <TableHead>Title</TableHead>
                   <TableHead>Price</TableHead>
                   <TableHead>Location</TableHead>
@@ -161,13 +247,19 @@ const PropertiesManagement = () => {
               <TableBody>
                 {filteredProperties.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={7} className="h-24 text-center">
                       No properties found
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredProperties.map((property: any) => (
                     <TableRow key={property._id}>
+                      <TableCell>
+                        <Checkbox 
+                          checked={selectedProperties.includes(property._id)} 
+                          onCheckedChange={() => togglePropertySelection(property)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">{property.title}</TableCell>
                       <TableCell>${property.price.toLocaleString()}</TableCell>
                       <TableCell>{property.city}, {property.state}</TableCell>
@@ -189,6 +281,45 @@ const PropertiesManagement = () => {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="py-4 flex justify-center">
+              <Pagination>
+                <PaginationContent>
+                  {/* Previous page button */}
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        onClick={() => handlePageChange(page)}
+                        isActive={page === currentPage}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+
+                  {/* Next page button */}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages} 
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
       )}
 
