@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { 
@@ -20,23 +19,21 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Pencil, Trash2, Plus, Upload, AlertCircle } from 'lucide-react';
+import { Pencil, Trash2, Upload, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { getProperties, deleteProperty } from '@/services/propertyService';
-import PropertyForm from '@/components/properties/PropertyForm';
+import { getProperties, deleteProperty, importProperties } from '@/services/propertyService';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 const PropertiesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentProperty, setCurrentProperty] = useState(null);
-  const [showForm, setShowForm] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importData, setImportData] = useState('');
   
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
 
   // Fetch properties
   const { data, isLoading, isError } = useQuery({
@@ -57,15 +54,19 @@ const PropertiesManagement = () => {
     }
   });
 
-  const handleAddNew = () => {
-    setCurrentProperty(null);
-    setShowForm(true);
-  };
-
-  const handleEdit = (property: any) => {
-    setCurrentProperty(property);
-    setShowForm(true);
-  };
+  // Import properties mutation
+  const importMutation = useMutation({
+    mutationFn: (data: any[]) => importProperties(data),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
+      toast.success(`Successfully imported ${result.count} properties`);
+      setShowImportDialog(false);
+      setImportData('');
+    },
+    onError: (error: any) => {
+      toast.error(`Import failed: ${error.response?.data?.message || 'Unknown error'}`);
+    }
+  });
 
   const handleDelete = (property: any) => {
     setCurrentProperty(property);
@@ -78,9 +79,23 @@ const PropertiesManagement = () => {
     }
   };
 
-  const handleFormSuccess = () => {
-    setShowForm(false);
-    queryClient.invalidateQueries({ queryKey: ['adminProperties'] });
+  const handleImportDialogOpen = () => {
+    setShowImportDialog(true);
+  };
+
+  const handleImportSubmit = () => {
+    try {
+      const parsedData = JSON.parse(importData);
+      
+      if (!Array.isArray(parsedData)) {
+        toast.error('Data must be an array of properties');
+        return;
+      }
+
+      importMutation.mutate(parsedData);
+    } catch (error) {
+      toast.error('Invalid JSON format');
+    }
   };
 
   // Filter properties based on search term
@@ -112,11 +127,11 @@ const PropertiesManagement = () => {
         
         <div className="flex flex-wrap gap-3">
           <Button 
-            onClick={handleAddNew}
-            className="bg-clickprop-blue hover:bg-clickprop-blue-dark"
+            onClick={handleImportDialogOpen}
+            className="bg-green-600 hover:bg-green-700 text-white"
           >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Property
+            <Upload className="h-4 w-4 mr-2" />
+            Import Properties JSON
           </Button>
         </div>
       </div>
@@ -162,13 +177,6 @@ const PropertiesManagement = () => {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => handleEdit(property)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
                           onClick={() => handleDelete(property)}
                           className="text-red-500 hover:text-red-700"
                         >
@@ -183,27 +191,6 @@ const PropertiesManagement = () => {
           </div>
         </div>
       )}
-
-      {/* Property form dialog */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {currentProperty ? 'Edit Property' : 'Add New Property'}
-            </DialogTitle>
-            <DialogDescription>
-              {currentProperty 
-                ? 'Update the property details below'
-                : 'Fill in the property details below'
-              }
-            </DialogDescription>
-          </DialogHeader>
-          <PropertyForm
-            property={currentProperty}
-            onSuccess={handleFormSuccess}
-          />
-        </DialogContent>
-      </Dialog>
 
       {/* Delete confirmation dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -229,6 +216,47 @@ const PropertiesManagement = () => {
               disabled={deleteMutation.isPending}
             >
               {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import JSON Dialog */}
+      <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Import Properties from JSON</DialogTitle>
+            <DialogDescription>
+              Paste your JSON array of properties below. Each property should include title, type, status, price, and location fields.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <Textarea 
+              value={importData}
+              onChange={(e) => setImportData(e.target.value)}
+              placeholder='[{"title": "Example Property", "type": "flat", "status": "sale", "price": 100000, "location": {"address": "123 Main St", "city": "Example City", "state": "Example State"}}]'
+              className="min-h-[300px] font-mono text-sm"
+            />
+            <div className="mt-2 text-sm text-gray-500">
+              <p>Required fields: title, type, status, price, location (with address, city, state).</p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowImportDialog(false)}
+              disabled={importMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleImportSubmit}
+              disabled={importMutation.isPending || !importData.trim()}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {importMutation.isPending ? 'Importing...' : 'Import Properties'}
             </Button>
           </DialogFooter>
         </DialogContent>
