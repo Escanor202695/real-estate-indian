@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileJson, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { importProperties } from "@/services/propertyService";
+import { uploadPropertiesFile } from "@/services/propertyService";
 import { useQueryClient } from "@tanstack/react-query";
 
 const Properties = () => {
@@ -17,121 +17,52 @@ const Properties = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Validate file type
+    if (file.type !== "application/json") {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a JSON file",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     console.log("File selected:", file.name);
 
-    const reader = new FileReader();
-
-    reader.onload = async (e) => {
-      try {
-        const jsonData = JSON.parse(e.target?.result as string);
-        console.log("JSON parsed successfully");
-
-        if (!Array.isArray(jsonData)) {
-          toast({
-            title: "Invalid JSON format",
-            description: "The JSON file must contain an array of properties",
-            variant: "destructive",
-          });
-          setIsUploading(false);
-          return;
-        }
-
-        // Only validate required fields according to the updated requirements
-        const invalidProperties = jsonData.filter(
-          (property) => 
-            !property.title || 
-            !property.description || 
-            !property.type || 
-            !property.status || 
-            typeof property.price !== 'number' ||
-            typeof property.size !== 'number'
-        );
-
-        if (invalidProperties.length > 0) {
-          toast({
-            title: `${invalidProperties.length} properties have missing required fields`,
-            description: "Each property must have title, description, type, status, price, and size",
-            variant: "destructive",
-          });
-          
-          if (invalidProperties.length === jsonData.length) {
-            setIsUploading(false);
-            return;
-          }
-        }
-
-        console.log("Properties to import:", jsonData.length);
-        console.log("First property example:", JSON.stringify(jsonData[0]));
-
-        toast({
-          title: "Processing data",
-          description: `Preparing ${jsonData.length - invalidProperties.length} properties for import...`,
-        });
-
-        try {
-          // Send the data to the API
-          const response = await importProperties(jsonData.filter(p => 
-            p.title && 
-            p.description && 
-            p.type && 
-            p.status && 
-            typeof p.price === 'number' && 
-            typeof p.size === 'number'
-          ));
-          
-          console.log("Import response:", response);
-          toast({
-            title: "Upload successful",
-            description: `${
-              response.count || response.data?.length || "All"
-            } properties imported successfully`,
-          });
-          queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
-        } catch (error: any) {
-          console.error("Import API error:", error);
-          let errorMessage = "Failed to import properties";
-
-          if (error.response && error.response.data && error.response.data.message) {
-            errorMessage += `: ${error.response.data.message}`;
-          } else if (error.message) {
-            errorMessage += `: ${error.message}`;
-          }
-
-          toast({
-            title: "Upload failed",
-            description: errorMessage,
-            variant: "destructive",
-          });
-        }
-
-        // Reset the file input
-        if (event.target) {
-          event.target.value = "";
-        }
-      } catch (error) {
-        console.error("JSON parsing error:", error);
-        toast({
-          title: "Error parsing JSON",
-          description: "Please check your file format and try again",
-          variant: "destructive",
-        });
-      } finally {
-        setIsUploading(false);
-      }
-    };
-
-    reader.onerror = () => {
-      console.error("FileReader error");
+    try {
+      // Use the new uploadPropertiesFile service
+      const response = await uploadPropertiesFile(file);
+      
       toast({
-        title: "Error reading file",
-        description: "There was an error reading the file",
+        title: "Upload successful",
+        description: `${response.count || 0} properties imported successfully`,
+      });
+      
+      // Refresh property list
+      queryClient.invalidateQueries({ queryKey: ["adminProperties"] });
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      
+      let errorMessage = "Failed to upload properties";
+      if (error.response && error.response.data && error.response.data.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast({
+        title: "Upload failed",
+        description: errorMessage,
         variant: "destructive",
       });
+    } finally {
       setIsUploading(false);
-    };
-
-    reader.readAsText(file);
+      // Reset the file input
+      if (event.target) {
+        event.target.value = "";
+      }
+    }
   };
 
   return (

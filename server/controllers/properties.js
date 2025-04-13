@@ -227,6 +227,131 @@ exports.getFeaturedProperties = async (req, res) => {
   }
 };
 
+// @desc    Upload and process properties from a JSON file
+// @route   POST /api/properties/upload
+// @access  Private (Admin)
+exports.uploadPropertiesFile = async (req, res) => {
+  try {
+    // Check if a file was uploaded
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please upload a JSON file'
+      });
+    }
+
+    console.log('File received:', req.file.originalname, 'Size:', req.file.size);
+
+    // Parse the JSON file content
+    let properties = [];
+    try {
+      properties = JSON.parse(req.file.buffer.toString());
+      console.log(`Parsed ${properties.length} properties from file`);
+    } catch (err) {
+      console.error('JSON parsing error:', err);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid JSON format. Please check your file.'
+      });
+    }
+
+    // Verify we have an array
+    if (!Array.isArray(properties)) {
+      console.error('Not an array:', typeof properties);
+      return res.status(400).json({
+        success: false,
+        message: 'The JSON file must contain an array of properties'
+      });
+    }
+
+    if (properties.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No properties found in the file'
+      });
+    }
+
+    // Log a sample property
+    console.log('Sample property from file:', JSON.stringify(properties[0], null, 2));
+    
+    // Filter valid properties (only required fields: title, description, type, status, price, size)
+    const validProperties = properties.filter(property => {
+      if (!property || typeof property !== 'object') return false;
+      
+      const hasRequiredFields = 
+        property.title && 
+        typeof property.title === 'string' &&
+        property.description && 
+        typeof property.description === 'string' &&
+        property.type && 
+        typeof property.type === 'string' &&
+        property.status && 
+        typeof property.status === 'string' &&
+        property.price !== undefined && 
+        !isNaN(Number(property.price)) &&
+        property.size !== undefined && 
+        !isNaN(Number(property.size));
+      
+      return hasRequiredFields;
+    });
+
+    console.log(`Found ${validProperties.length} valid properties out of ${properties.length}`);
+
+    if (validProperties.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No valid properties found in the file. Each property must have title, description, type, status, price, and size fields.'
+      });
+    }
+
+    // Insert valid properties into the database
+    try {
+      const insertedProperties = await Property.insertMany(validProperties);
+      console.log(`Successfully inserted ${insertedProperties.length} properties`);
+      
+      // Update city property counts if city is provided
+      for (const property of insertedProperties) {
+        if (property.location && property.location.city) {
+          await City.findOneAndUpdate(
+            { name: property.location.city },
+            { $inc: { propertyCount: 1 } },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          );
+        }
+      }
+      
+      res.status(201).json({
+        success: true,
+        count: insertedProperties.length,
+        message: `${insertedProperties.length} properties imported successfully`
+      });
+    } catch (err) {
+      console.error('Database error:', err);
+      
+      // Provide more detailed error information
+      let errorMessage = 'Server Error';
+      if (err.name === 'ValidationError') {
+        errorMessage = Object.values(err.errors).map(val => val.message).join(', ');
+      } else if (err.code === 11000) {
+        errorMessage = 'Duplicate key error. Some properties may already exist in the database.';
+      } else {
+        errorMessage = err.message;
+      }
+      
+      res.status(400).json({
+        success: false,
+        message: errorMessage
+      });
+    }
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({
+      success: false,
+      message: `Error processing file: ${err.message}`
+    });
+  }
+};
+
 // @desc    Import properties from JSON
 // @route   POST /api/properties/import
 // @access  Private (Admin)

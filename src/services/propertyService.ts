@@ -1,3 +1,4 @@
+
 import api from './api';
 
 // Property listings
@@ -82,6 +83,28 @@ export const importProperties = async (propertiesData: any[]) => {
     return response.data;
   } catch (error) {
     console.error('Import API error:', error);
+    throw error;
+  }
+};
+
+// Added function to upload JSON files directly
+export const uploadPropertiesFile = async (file: File) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    console.log('Uploading file:', file.name, 'Size:', file.size);
+    
+    const response = await api.post('/properties/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    
+    console.log('Upload API response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Upload API error:', error);
     throw error;
   }
 };
